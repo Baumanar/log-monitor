@@ -25,11 +25,11 @@ func main(){
 	ctx, cancel := context.WithCancel(context.Background())
 
 
-	displayChan := make(chan string)
+	displayChan := make(chan monitoring.StatRecord)
 	alertChan := make(chan string)
 
 	monitor := monitoring.LogMonitor{}
-	monitor.Init(*logFile, displayChan, alertChan, 3)
+	monitor.Init(*logFile, displayChan, alertChan, 3, ctx)
 
 
 
@@ -41,10 +41,14 @@ func main(){
 	//go monitoring.GatherLogs(inLogs, outLogs)
 	go monitor.Run()
 
-
 	displayer := display.Displayer{}
 	displayer.Init(displayChan, alertChan, ctx, cancel)
 	displayer.Run()
+
+
+
+
+
 }
 
 

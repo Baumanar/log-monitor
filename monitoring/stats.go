@@ -1,11 +1,19 @@
 package monitoring
 
 import (
-	"fmt"
 	"sort"
 )
 
-func getStats(records []LogRecord) (map[string]int, map[string]int, map[string]int, int, int) {
+type StatRecord struct{
+	TopSections []Pair
+	TopMethods []Pair
+	TopStatus[]Pair
+	NumRequests int
+	BytesCount int
+}
+
+
+func getStats(records []LogRecord, k int) StatRecord {
 	sectionMap := make(map[string]int, 0)
 	methodMap := make(map[string]int, 0)
 	statusMap := make(map[string]int, 0)
@@ -18,7 +26,13 @@ func getStats(records []LogRecord) (map[string]int, map[string]int, map[string]i
 		statusMap[log.status]++
 		bytesCount += log.bytes
 	}
-	return sectionMap, methodMap,statusMap,requests, bytesCount
+	return StatRecord{
+		TopSections: getTopK(sectionMap, k),
+		TopMethods:  getTopK(methodMap, k),
+		TopStatus:   getTopK(statusMap, k),
+		NumRequests: requests,
+		BytesCount:  bytesCount,
+	}
 }
 
 func Min(x, y int) int {
@@ -28,23 +42,20 @@ func Min(x, y int) int {
 	return x
 }
 
-type kv struct {
+type Pair struct {
 	Key   string
 	Value int
 }
 
-func getTopK(countMap map[string]int, k int) string{
-	var ss []kv
+func getTopK(countMap map[string]int, k int) []Pair {
+	var ss []Pair
 	for k, v := range countMap {
-		ss = append(ss, kv{k, v})
+		ss = append(ss, Pair{k, v})
 	}
 
 	sort.Slice(ss, func(i, j int) bool {
 		return ss[i].Value > ss[j].Value
 	})
-	var out string
-	for i:=0; i<Min(k, len(ss));i++ {
-		out += fmt.Sprintf("%s, %d\n", ss[i].Key, ss[i].Value)
-	}
-	return out
+
+	return ss[:Min(k, len(ss))]
 }

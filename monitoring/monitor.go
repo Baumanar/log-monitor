@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -20,12 +21,12 @@ type LogMonitor struct{
 	LogRecords     []LogRecord
 	AlertTraffic   []int
 	Mutex          sync.Mutex
-	OutputChan 	   chan string
+	OutputChan 	   chan StatRecord
 	AlertChan	   chan string
-	Done           chan bool
+	Ctx 		   context.Context
 }
 
-func (m *LogMonitor) Init(logFile string, displayChan chan string, alertChan chan string, timeWindow int){
+func (m *LogMonitor) Init(logFile string, displayChan chan StatRecord, alertChan chan string, timeWindow int, ctx context.Context){
 	m.LogFile = logFile
 	m.TimeWindow = timeWindow
 	m.UpdateFreq = 5
@@ -36,9 +37,10 @@ func (m *LogMonitor) Init(logFile string, displayChan chan string, alertChan cha
 	m.Mutex = sync.Mutex{}
 	m.OutputChan = displayChan
 	m.AlertChan = alertChan
+	m.Ctx = ctx
 }
 
-func NewMonitor(logFile string, displayChan chan string, alertChan chan string) (LogMonitor){
+func NewMonitor(logFile string, displayChan chan StatRecord, alertChan chan string) (LogMonitor){
 	var mutex sync.Mutex
 	monitor := LogMonitor{
 		LogFile: logFile,
@@ -61,15 +63,14 @@ func (m *LogMonitor) readLog() {
 	defer file.Close()
 	_, err := file.Seek(0, 2)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Sprintf("Cannot find %s file.", m.LogFile))
 	}
 	reader := bufio.NewReader(file)
 	var line string
-	run := true
-	for run{
+	for {
 		select {
-		case <-m.Done:
-			run = false
+		case <-m.Ctx.Done():
+			return
 		default:
 			line, err = reader.ReadString('\n')
 			if err == io.EOF || line =="" {
@@ -113,19 +114,15 @@ func (m *LogMonitor) alert(){
 }
 
 func (m *LogMonitor) report(){
-	var out string
-	out += fmt.Sprintf("Number of records: %d Invalid:  %d\n", len(m.LogRecords), m.InvalidRecords)
-	sectionMap, methodMap,statusMap,requests, bytesCount := getStats(m.LogRecords)
-	out += fmt.Sprintf("Top sections: \n%s", getTopK(sectionMap, 5))
-	out += fmt.Sprintf("Top status: \n%s", getTopK(methodMap, 5))
-	out += fmt.Sprintf("Top requests: \n%s", getTopK(statusMap, 5))
-	out += fmt.Sprintf("Number of requests: %d", requests)
-	out += fmt.Sprintf("Number of bytes: %d",bytesCount )
+	out := make([]string, 0)
+	out = append(out, fmt.Sprintf("Number of records: %d Invalid:  %d\n", len(m.LogRecords), m.InvalidRecords))
+	statRecord := getStats(m.LogRecords, 5)
+
 	m.Mutex.Lock()
 	m.LogRecords = nil
 	m.InvalidRecords = 0
 	m.Mutex.Unlock()
-	m.OutputChan <- out
+	m.OutputChan <- statRecord
 }
 
 
