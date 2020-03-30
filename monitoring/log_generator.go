@@ -78,7 +78,7 @@ func LogGenerator(ctx context.Context, logFile string) {
 		counters = append(counters, count)
 		count--
 	}
-
+	// the ticker duration changes at each tick
 	ticker := time.NewTicker(time.Duration(startInterval) * time.Millisecond)
 	idx := 0
 
