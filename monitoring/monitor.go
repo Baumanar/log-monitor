@@ -41,7 +41,7 @@ type LogMonitor struct {
 	Ctx context.Context
 }
 
-// Returns a new LogMonitor with the specified parameters
+// New returns a new LogMonitor with the specified parameters
 func New(ctx context.Context, logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
 	var mutex sync.Mutex
 	monitor := &LogMonitor{

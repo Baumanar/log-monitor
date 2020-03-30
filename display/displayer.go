@@ -19,20 +19,20 @@ import (
 // Display displays information to the terminal
 type Display struct {
 	// StatChan is the channel receiving statistic information from the monitor
-	StatChan      chan monitoring.StatRecord
+	StatChan chan monitoring.StatRecord
 	// AlertChan is the channel receiving statistic information from the monitor
-	AlertChan     chan monitoring.AlertRecord
+	AlertChan chan monitoring.AlertRecord
 	// termdash text displaying the uptime
 	uptimeDisplay *text.Text
 	// termdash text displaying the statistics
-	statDisplay   *text.Text
+	statDisplay *text.Text
 	// alert text displaying the statistics
-	alertDisplay  *text.Text
+	alertDisplay *text.Text
 	// histogram of the number of requests received
-	histogram     *sparkline.SparkLine
+	histogram *sparkline.SparkLine
 	// Global app context
-	ctx           context.Context
-	cancel        context.CancelFunc
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // New returns a new Display with the specified parameters
@@ -87,6 +87,7 @@ func (d *Display) displayPairs(pairs []monitoring.Pair) {
 		}
 	}
 }
+
 // displayInfo displays all the information on the statDisplay:
 // 		The pairs of each section/method/status
 // 		The number of requests
@@ -125,9 +126,9 @@ func (d *Display) displayInfo(stat monitoring.StatRecord) {
 
 func fmtDuration(d time.Duration) string {
 	//uptime := int(d) / 1000000000
-	s := d % time.Second*60
-	m := d / time.Second*60 % time.Second*60
-	h := d / time.Second*3600
+	s := d % time.Second * 60
+	m := d / time.Second * 60 % time.Second * 60
+	h := d / time.Second * 3600
 	return fmt.Sprintf("%02dh%02dmin%02ds", h, m, s)
 }
 

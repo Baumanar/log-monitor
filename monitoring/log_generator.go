@@ -65,7 +65,7 @@ func writeLogLine(logFile string) {
 }
 
 // LogGenerator generates logs and writes them to the log file
-func LogGenerator( ctx context.Context, logFile string) {
+func LogGenerator(ctx context.Context, logFile string) {
 	startInterval := float64(5000)
 
 	counters := make([]float64, 0)

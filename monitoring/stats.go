@@ -4,7 +4,7 @@ import (
 	"sort"
 )
 
-// A StatRecord is the type passed from the Monitor to
+// StatRecord is the type passed from the Monitor to
 // the display when there is an update
 type StatRecord struct {
 	TopSections []Pair
@@ -14,7 +14,7 @@ type StatRecord struct {
 	BytesCount  int
 }
 
-// An AlertRecord is the type passed from the Monitor to
+// AlertRecord is the type passed from the Monitor to
 // the display when there is an alert
 // if Alert is true, the threshold has been exceeded
 // if Alert in false, the alert recovered
@@ -24,7 +24,7 @@ type AlertRecord struct {
 	NumTraffic int
 }
 
-// A pair is composed by a Key and a Value
+// Pair is composed by a Key and a Value
 // Key is the name of the section/method/status
 // Value is the number of hits
 type Pair struct {
