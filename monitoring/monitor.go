@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const sleepTime = 50
+
 
 // LogMonitor listens to the log file and retrieves new logs
 // Computes the statistics of the new logs and sends them to the display
@@ -28,7 +30,7 @@ type LogMonitor struct{
 	InvalidRecords int
 	// Current LogRecords
 	LogRecords     []LogRecord
-	// Number of requests during each update
+	// Number of requests at each update, used for alerting
 	AlertTraffic   []int
 	// mutex for thread safety
 	Mutex          sync.Mutex
@@ -85,7 +87,7 @@ func (m *LogMonitor) readLog() {
 			line, err = reader.ReadString('\n')
 			// If no new line was found, sleep for a short time to avoid overcomputing
 			if err == io.EOF || line =="" {
-				time.Sleep(time.Millisecond*50)
+				time.Sleep(time.Millisecond*sleepTime)
 			} else if err != io.EOF {
 				// A new line has been found,  parse if to create a new logRecord
 				newRecord, err := parseLogLine(line)
@@ -95,7 +97,7 @@ func (m *LogMonitor) readLog() {
 				if err != nil{
 					m.InvalidRecords++
 				} else {
-					m.LogRecords = append(m.LogRecords, newRecord)
+					m.LogRecords = append(m.LogRecords, *newRecord)
 				}
 				m.Mutex.Unlock()
 			} else {
@@ -105,15 +107,6 @@ func (m *LogMonitor) readLog() {
 	}
 }
 
-// Add a new element to the alert array
-func (m *LogMonitor) addTraffic(traffic int){
-	m.AlertTraffic = append(m.AlertTraffic, traffic)
-}
-
-// Remove the First element from the alert array
-func (m *LogMonitor) removeTraffic(){
-	m.AlertTraffic = m.AlertTraffic[1:]
-}
 
 // alert sends alerts to the display by sending an AlertRecord to the display through the Alert channel
 func (m *LogMonitor) alert(){
@@ -164,10 +157,11 @@ func (m *LogMonitor) Run() {
 	// Do the alerting and send the statistics each UpdateFreq seconds
 	for{
 		time.Sleep(time.Duration(m.UpdateFreq)*time.Second)
-		m.addTraffic(len(m.LogRecords))
-		// If
+		// add the traffic number to the AlertTraffic array
+		m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
+		// If the length of the array is bigger than the window, remove the oldest traffic number
 		if len(m.AlertTraffic)>m.TimeWindow {
-			m.removeTraffic()
+			m.AlertTraffic = m.AlertTraffic[1:]
 		}
 		m.alert()
 		m.report()

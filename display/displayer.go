@@ -11,7 +11,7 @@ import (
 	"github.com/mum4k/termdash/terminal/terminalapi"
 	"github.com/mum4k/termdash/widgets/sparkline"
 	"github.com/mum4k/termdash/widgets/text"
-	"log-monitor/monitoring"
+	"github.com/Baumanar/log-monitor/monitoring"
 	"time"
 )
 
