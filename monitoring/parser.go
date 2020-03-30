@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// LogRecord gathers all the infomation about a parsed log line
+// LogRecord gathers all the information about a parsed log line
 type LogRecord struct {
 	// Remote hostname or IP number
 	remotehost string
