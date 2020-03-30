@@ -4,15 +4,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"github.com/Baumanar/log-monitor/display"
 	"github.com/Baumanar/log-monitor/monitoring"
+	"log"
 	"math/rand"
 	"os"
 	"time"
 )
 
-func main(){
+func main() {
 	// Create a global context used by the monitor and the display for cancellation signals
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -32,13 +32,12 @@ func main(){
 	// Channel to alert
 	alertChan := make(chan monitoring.AlertRecord)
 
-
 	// Create a new monitor and a new display with the given parameters
 	monitor := monitoring.New(*logFile, displayChan, alertChan, *timeWindow, *updateFreq, *threshold, ctx)
 	display := display.New(displayChan, alertChan, ctx, cancel)
 
 	// If the app is running in demo mode, write concurrently logs to the log file
-	if *isDemo{
+	if *isDemo {
 		// Get a random seed
 		rand.Seed(time.Now().UnixNano())
 		// Write logs in a goroutine
@@ -51,11 +50,4 @@ func main(){
 	// Do the displaying
 	display.Run()
 
-
 }
-
-
-
-
-
-

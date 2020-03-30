@@ -10,14 +10,14 @@ func Test_fmtDuration(t *testing.T) {
 		d time.Duration
 	}
 	tests := []struct {
-		name string
+		name  string
 		input time.Duration
-		want string
+		want  string
 	}{
-		{"test0", time.Duration(time.Second*3610), "01h00min10s"},
-		{"test1", time.Duration(time.Second*4652), "01h17min32s"},
-		{"test2", time.Duration(time.Second*79846), "22h10min46s"},
-		{"test3", time.Duration(time.Second*365), "00h06min05s"},
+		{"test0", time.Duration(time.Second * 3610), "01h00min10s"},
+		{"test1", time.Duration(time.Second * 4652), "01h17min32s"},
+		{"test2", time.Duration(time.Second * 79846), "22h10min46s"},
+		{"test3", time.Duration(time.Second * 365), "00h06min05s"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

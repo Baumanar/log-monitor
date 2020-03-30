@@ -11,9 +11,9 @@ func Test_parseLogLine(t *testing.T) {
 		input string
 	}
 	tests := []struct {
-		name      string
-		input     string
-		want      LogRecord
+		name    string
+		input   string
+		want    LogRecord
 		wantErr error
 	}{
 		{"test1",
@@ -24,10 +24,10 @@ func Test_parseLogLine(t *testing.T) {
 				authuser:   "paul",
 				date:       "[27/March/2020:12:10:41 +0100]",
 				method:     "GET",
-				section:      "/posts",
+				section:    "/posts",
 				protocol:   "HTTP/1.0",
 				status:     "403",
-				bytesCount:      5026,
+				bytesCount: 5026,
 			},
 			nil,
 		},
@@ -40,10 +40,10 @@ func Test_parseLogLine(t *testing.T) {
 				authuser:   "jill",
 				date:       "[27/March/2020:12:16:36 +0100]",
 				method:     "PUT",
-				section:      "/login",
+				section:    "/login",
 				protocol:   "HTTP/1.0",
 				status:     "200",
-				bytesCount:      1353,
+				bytesCount: 1353,
 			},
 			nil,
 		},
@@ -56,34 +56,32 @@ func Test_parseLogLine(t *testing.T) {
 				authuser:   "jill",
 				date:       "[27/March/2020:12:16:36 +0100]",
 				method:     "PUT",
-				section:      "/login",
+				section:    "/login",
 				protocol:   "HTTP/1.0",
 				status:     "200",
-				bytesCount:      1353,
+				bytesCount: 1353,
 			},
 			nil,
 		},
 		// test with bad formatting
 		{"test4",
 			"141.146.202.67 - jill [27/March/2020:12:16:36 +0100]",
-			LogRecord{} ,
+			LogRecord{},
 			errors.New("Invalid log format."),
 		},
 
 		{"test5",
 			"[27/March/2020:12:16:36 +0100] 141.146.202.67 - jill ",
-			LogRecord{} ,
+			LogRecord{},
 			errors.New("Invalid log format."),
 		},
 		// test with empty string
 		{"test6",
 			"",
-			LogRecord{} ,
+			LogRecord{},
 			errors.New("Invalid log format."),
 		},
 	}
-
-
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

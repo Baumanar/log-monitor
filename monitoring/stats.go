@@ -4,12 +4,12 @@ import (
 	"sort"
 )
 
-type StatRecord struct{
+type StatRecord struct {
 	TopSections []Pair
-	TopMethods []Pair
-	TopStatus[]Pair
+	TopMethods  []Pair
+	TopStatus   []Pair
 	NumRequests int
-	BytesCount int
+	BytesCount  int
 }
 
 // An AlertRecord is the type passed from the Monitor to
@@ -17,8 +17,8 @@ type StatRecord struct{
 // if Alert is true, the threshold has been exceeded
 // if Alert in false, the alert recovered
 // NumTraffic is the current number of request in the timeWindow (2min default)
-type AlertRecord struct{
-	Alert bool
+type AlertRecord struct {
+	Alert      bool
 	NumTraffic int
 }
 
@@ -44,7 +44,7 @@ func getStats(records []LogRecord, k int) StatRecord {
 	bytesCount := 0
 
 	// update maps and byteCount with each record
-	for _, log := range records{
+	for _, log := range records {
 		sectionMap[log.section]++
 		methodMap[log.method]++
 		statusMap[log.status]++
@@ -66,7 +66,6 @@ func Min(x, y int) int {
 	}
 	return x
 }
-
 
 // getTopK return k pairs of (Key, Value) whose values are the highest in the countMap map
 // Returns an ordered array of Pair of size K, the first element of the array has the highest value
