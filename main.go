@@ -3,50 +3,53 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"log"
 	"log-monitor/display"
 	"log-monitor/monitoring"
 	"math/rand"
-	_ "net/http/pprof"
+	"os"
 	"time"
 )
 
-
-
-
-
-
 func main(){
-
-	//ctx, cancel := context.WithCancel(context.Background())
-	rand.Seed(time.Now().UnixNano())
-	isDemo := flag.Bool("flagname", true, "demo or not")
-	logFile := flag.String("logfile", "/tmp/access.log", "demo or not")
-
+	// Create a global context used by the monitor and the display for cancellation signals
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Flags of the app
+	isDemo := flag.Bool("flagname", true, "demo or not")
+	logFile := flag.String("logfile", "/tmp/access.log", "demo or not")
+	timeWindow := flag.Int("time window", 120, "time window for alerting")
+	threshold := flag.Int("threshold", 120, "threshold for alerting")
+	updateFreq := flag.Int("update frequency", 5, "update frequency of the statistics")
 
+	if _, err := os.Stat(*logFile); os.IsNotExist(err) {
+		log.Fatal(fmt.Sprintf("file %s does not exist.", *logFile))
+	}
+
+	// Channel to display statistics
 	displayChan := make(chan monitoring.StatRecord)
-	alertChan := make(chan string)
-
-	monitor := monitoring.LogMonitor{}
-	monitor.Init(*logFile, displayChan, alertChan, 3, ctx)
+	// Channel to alert
+	alertChan := make(chan monitoring.AlertRecord)
 
 
+	// Create a new monitor and a new display with the given parameters
+	monitor := monitoring.New(*logFile, displayChan, alertChan, *timeWindow, *updateFreq, *threshold, ctx)
+	display := display.New(displayChan, alertChan, ctx, cancel)
 
-
+	// If the app is running in demo mode, write concurrently logs to the log file
 	if *isDemo{
+		// Get a random seed
+		rand.Seed(time.Now().UnixNano())
+		// Write logs in a goroutine
 		go monitoring.LogGenerator(*logFile, ctx)
 	}
 
-	//go monitoring.GatherLogs(inLogs, outLogs)
+	// Run the monitor in a goroutine
 	go monitor.Run()
 
-	displayer := display.Displayer{}
-	displayer.Init(displayChan, alertChan, ctx, cancel)
-	displayer.Run()
-
-
-
+	// Do the displaying
+	display.Run()
 
 
 }

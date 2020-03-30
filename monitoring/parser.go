@@ -47,16 +47,4 @@ func parseLogLine(input string) (LogRecord, error){
 		}, nil
 	}
 }
-//
-//func getSection(route string) (string, error){
-//	if len(route) == 0 || string(route[0]) != "/"{
-//		return "", errors.New("Invalid section format.")
-//	}
-//
-//	slashIndex := strings.Index(route[1:], "/")
-//	if slashIndex == -1{
-//		return route, nil
-//	} else {
-//		return route[:slashIndex+1], nil
-//	}
-//}
+

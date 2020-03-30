@@ -3,7 +3,6 @@ package monitoring
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,60 +10,70 @@ import (
 	"time"
 )
 
+
+// LogMonitor listens to the log file and retrieves new logs
+// Computes the statistics of the new logs and sends them to the display
+// Sends alert whenever the threshold is exceeded or recovers
 type LogMonitor struct{
+	// The log file to read
 	LogFile      string
+	// Time window for the alreting
 	TimeWindow     int
+	// number of seconds between each send to the display
 	UpdateFreq	   int
+	// Current alert status
 	InAlert        bool
+	// Maximum number of request per second before alerting
 	Threshold      int
 	InvalidRecords int
+	// Current LogRecords
 	LogRecords     []LogRecord
+	// Number of requests during each update
 	AlertTraffic   []int
+	// mutex for thread safety
 	Mutex          sync.Mutex
-	OutputChan 	   chan StatRecord
-	AlertChan	   chan string
+	// channel to communicate statistics to the display
+	StatChan 	   chan StatRecord
+	// channel to send alerts to the display
+	AlertChan	   chan AlertRecord
+	// Global app context
 	Ctx 		   context.Context
 }
 
-func (m *LogMonitor) Init(logFile string, displayChan chan StatRecord, alertChan chan string, timeWindow int, ctx context.Context){
-	m.LogFile = logFile
-	m.TimeWindow = timeWindow
-	m.UpdateFreq = 5
-	m.InAlert = false
-	m.Threshold = 10
-	m.InvalidRecords = 0
-	m.LogRecords = make([]LogRecord, 0)
-	m.Mutex = sync.Mutex{}
-	m.OutputChan = displayChan
-	m.AlertChan = alertChan
-	m.Ctx = ctx
-}
-
-func NewMonitor(logFile string, displayChan chan StatRecord, alertChan chan string) (LogMonitor){
+// Returns a new LogMonitor with the specified parameters
+func New(logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int, ctx context.Context) *LogMonitor {
 	var mutex sync.Mutex
-	monitor := LogMonitor{
+	monitor := &LogMonitor{
 		LogFile: logFile,
-		TimeWindow:   3,
-		UpdateFreq: 5,
+		TimeWindow:   timeWindow,
+		UpdateFreq: updateFreq,
 		InAlert:      false,
-		Threshold:    10,
+		Threshold:    threshold,
 		InvalidRecords: 0,
 		LogRecords:     make([]LogRecord, 0),
 		AlertTraffic: make([]int, 0),
 		Mutex: mutex,
-		OutputChan: displayChan,
+		StatChan: displayChan,
 		AlertChan: alertChan,
+		Ctx: ctx,
 	}
 	return monitor
 }
 
+// readLog reads reads the log file
+// continuously  checks for new log lines
 func (m *LogMonitor) readLog() {
+	// Open the file and defer closing when returning
 	file, _ := os.Open(m.LogFile)
 	defer file.Close()
+	// Go to the end of the file to get newest log lines
 	_, err := file.Seek(0, 2)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Cannot find %s file.", m.LogFile))
+		log.Fatal()
+		m.Ctx.Done()
 	}
+
+	// Create a buffer for reading
 	reader := bufio.NewReader(file)
 	var line string
 	for {
@@ -72,11 +81,16 @@ func (m *LogMonitor) readLog() {
 		case <-m.Ctx.Done():
 			return
 		default:
+			// Read the file to the end of the current line
 			line, err = reader.ReadString('\n')
+			// If no new line was found, sleep for a short time to avoid overcomputing
 			if err == io.EOF || line =="" {
 				time.Sleep(time.Millisecond*50)
 			} else if err != io.EOF {
+				// A new line has been found,  parse if to create a new logRecord
 				newRecord, err := parseLogLine(line)
+				// Thread safety, add new logRecords
+				// Lock to avoid that the monitor flushes the array at the same time when sending statistics
 				m.Mutex.Lock()
 				if err != nil{
 					m.InvalidRecords++
@@ -91,38 +105,55 @@ func (m *LogMonitor) readLog() {
 	}
 }
 
+// Add a new element to the alert array
 func (m *LogMonitor) addTraffic(traffic int){
 	m.AlertTraffic = append(m.AlertTraffic, traffic)
 }
 
+// Remove the First element from the alert array
 func (m *LogMonitor) removeTraffic(){
 	m.AlertTraffic = m.AlertTraffic[1:]
 }
 
+// alert sends alerts to the display by sending an AlertRecord to the display through the Alert channel
 func (m *LogMonitor) alert(){
 	numTraffic := 0
+	// sum up the traffic in the time window
 	for _,t := range m.AlertTraffic {
 		numTraffic += t
 	}
+	// If the number of requests exceeds the threshold and the monitor was not in alert
+	// set InAlert to true and send an AlertRecord to the display
 	if numTraffic > m.Threshold*m.TimeWindow && !m.InAlert {
 		m.InAlert = true
-		m.AlertChan <- fmt.Sprintf("\n High traffic generated an alert - hits = %d, triggered at %s\n", numTraffic, time.Now().Format("15:04:05, January 02 2006"))
+		m.AlertChan <- AlertRecord{
+			Alert:      true,
+			NumTraffic: numTraffic,
+		}
+	// If the number of requests is below the threshold and the monitor was in in alert
+	// set InAlert to false and send an AlertRecord to the display
 	} else if  numTraffic < m.Threshold*m.TimeWindow && m.InAlert {
 		m.InAlert = false
-		m.AlertChan <- fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006"))
+		m.AlertChan <- 	AlertRecord{
+			Alert:      false,
+			NumTraffic: numTraffic,
+		}
 	}
 }
 
+//  Report sends log statistics to the display
 func (m *LogMonitor) report(){
-	out := make([]string, 0)
-	out = append(out, fmt.Sprintf("Number of records: %d Invalid:  %d\n", len(m.LogRecords), m.InvalidRecords))
+	// Compute the stats of the current records
 	statRecord := getStats(m.LogRecords, 5)
-
+	//
 	m.Mutex.Lock()
+	// Thread safety, add new logRecords
+	// Lock to avoid that the monitor adds new records at the same time it is flushing
 	m.LogRecords = nil
 	m.InvalidRecords = 0
 	m.Mutex.Unlock()
-	m.OutputChan <- statRecord
+	// Send stats using the StatCha
+	m.StatChan <- statRecord
 }
 
 
@@ -130,10 +161,11 @@ func (m *LogMonitor) report(){
 func (m *LogMonitor) Run() {
 	// Concurrently red the log file
 	go m.readLog()
-	// Do the alerting and send the statistics
+	// Do the alerting and send the statistics each UpdateFreq seconds
 	for{
 		time.Sleep(time.Duration(m.UpdateFreq)*time.Second)
 		m.addTraffic(len(m.LogRecords))
+		// If
 		if len(m.AlertTraffic)>m.TimeWindow {
 			m.removeTraffic()
 		}

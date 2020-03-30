@@ -3,6 +3,7 @@ package monitoring
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -63,21 +64,37 @@ func WriteLogLine(logFile string){
 	}
 }
 
+func RandSinSleep(step int64, variance float64) float64{
+	return (math.Sin(float64(step)*2*math.Pi/10)+1.0)*5//+ rand.Float64()*0.1
+}
 
 func LogGenerator(logFile string, ctx context.Context){
-	var min, max int64
-	min, max= 50, 300
+	start_interval := float64(5000)
 
-	r := min + rand.Int63n(max)
-	ticker := time.NewTicker(time.Duration(r)*time.Millisecond)
+	counters := make([]float64, 0)
+	count := 1.0
+	for count < 50{
+		counters = append(counters, count)
+		count ++
+	}
+	for count > 1{
+		counters = append(counters, count)
+		count --
+	}
+
+	ticker := time.NewTicker(time.Duration(start_interval) * time.Millisecond)
+	idx := 0
+
 	for {
 		select {
 			case <-ticker.C:
-				//fmt.Println("ticker ticked, wirtting new log")
 				WriteLogLine(logFile)
-				r := min + rand.Int63n(max)
-				ticker = time.NewTicker(time.Duration(r)*time.Millisecond)
 
+				rand := rand.Float64()*100
+				//log.Println("ticker accelerating to " + fmt.Sprint(start_interval/counters[idx]+rand) + " ms")
+				ticker.Stop()
+				ticker = time.NewTicker(time.Duration(start_interval/counters[idx]+rand) * time.Millisecond)
+				idx = (idx+1)%98
 			case <-ctx.Done():
 				return
 			}
