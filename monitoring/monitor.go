@@ -42,7 +42,7 @@ type LogMonitor struct {
 }
 
 // Returns a new LogMonitor with the specified parameters
-func New(logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int, ctx context.Context) *LogMonitor {
+func New(ctx context.Context, logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
 	var mutex sync.Mutex
 	monitor := &LogMonitor{
 		LogFile:        logFile,
@@ -147,6 +147,7 @@ func (m *LogMonitor) report() {
 	m.StatChan <- statRecord
 }
 
+// Run is the main function of the monitor
 func (m *LogMonitor) Run() {
 	// Concurrently red the log file
 	go m.readLog()

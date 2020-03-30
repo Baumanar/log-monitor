@@ -4,6 +4,8 @@ import (
 	"sort"
 )
 
+// A StatRecord is the type passed from the Monitor to
+// the display when there is an update
 type StatRecord struct {
 	TopSections []Pair
 	TopMethods  []Pair

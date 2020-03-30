@@ -3,7 +3,6 @@ package monitoring
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -51,8 +50,8 @@ func generateLog() string {
 	return fmt.Sprintf("%s - %s %s %s %s %s\n", randomIP(), randomUser(), currentTime(), randomRequest(), randomStatus(), randomByteSize())
 }
 
-// Writes a generated log line in the log file
-func WriteLogLine(logFile string) {
+// WriteLogLine writes a generated log line in the log file
+func writeLogLine(logFile string) {
 	// Open file in append mode to write log lines at the end of the file
 	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -65,12 +64,9 @@ func WriteLogLine(logFile string) {
 	}
 }
 
-func RandSinSleep(step int64, variance float64) float64 {
-	return (math.Sin(float64(step)*2*math.Pi/10) + 1.0) * 5 //+ rand.Float64()*0.1
-}
-
-func LogGenerator(logFile string, ctx context.Context) {
-	start_interval := float64(5000)
+// LogGenerator generates logs and writes them to the log file
+func LogGenerator( ctx context.Context, logFile string) {
+	startInterval := float64(5000)
 
 	counters := make([]float64, 0)
 	count := 1.0
@@ -83,18 +79,18 @@ func LogGenerator(logFile string, ctx context.Context) {
 		count--
 	}
 
-	ticker := time.NewTicker(time.Duration(start_interval) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(startInterval) * time.Millisecond)
 	idx := 0
 
 	for {
 		select {
 		case <-ticker.C:
-			WriteLogLine(logFile)
+			writeLogLine(logFile)
 
 			rand := rand.Float64() * 100
 			//log.Println("ticker accelerating to " + fmt.Sprint(start_interval/counters[idx]+rand) + " ms")
 			ticker.Stop()
-			ticker = time.NewTicker(time.Duration(start_interval/counters[idx]+rand) * time.Millisecond)
+			ticker = time.NewTicker(time.Duration(startInterval/counters[idx]+rand) * time.Millisecond)
 			idx = (idx + 1) % 98
 		case <-ctx.Done():
 			return

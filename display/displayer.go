@@ -16,18 +16,28 @@ import (
 	"time"
 )
 
-type Displayer struct {
+// Display displays information to the terminal
+type Display struct {
+	// StatChan is the channel receiving statistic information from the monitor
 	StatChan      chan monitoring.StatRecord
+	// AlertChan is the channel receiving statistic information from the monitor
 	AlertChan     chan monitoring.AlertRecord
+	// termdash text displaying the uptime
 	uptimeDisplay *text.Text
+	// termdash text displaying the statistics
 	statDisplay   *text.Text
+	// alert text displaying the statistics
 	alertDisplay  *text.Text
+	// histogram of the number of requests received
 	histogram     *sparkline.SparkLine
+	// Global app context
 	ctx           context.Context
 	cancel        context.CancelFunc
 }
 
-func New(statChan chan monitoring.StatRecord, alertChan chan monitoring.AlertRecord, ctx context.Context, cancel context.CancelFunc) *Displayer {
+// New returns a new Display with the specified parameters
+func New(ctx context.Context, cancel context.CancelFunc, statChan chan monitoring.StatRecord, alertChan chan monitoring.AlertRecord) *Display {
+	// Initialize displays
 	uptimeDisplay, err := text.New(text.WrapAtWords())
 	if err != nil {
 		panic(err)
@@ -45,7 +55,7 @@ func New(statChan chan monitoring.StatRecord, alertChan chan monitoring.AlertRec
 		panic(err)
 	}
 
-	displayer := &Displayer{
+	displayer := &Display{
 		StatChan:      statChan,
 		AlertChan:     alertChan,
 		uptimeDisplay: uptimeDisplay,
@@ -55,18 +65,21 @@ func New(statChan chan monitoring.StatRecord, alertChan chan monitoring.AlertRec
 		ctx:           ctx,
 		cancel:        cancel,
 	}
-
 	return displayer
 }
 
-func (d *Displayer) displayPairs(pairs []monitoring.Pair) {
+// Displays statistic pairs to the statDisplay
+func (d *Display) displayPairs(pairs []monitoring.Pair) {
+	// We iterate i and not on the elements of pairs to always have the same number of lines printed
 	for i := 0; i < 5; i++ {
+		// display each pair on a row
 		if i < len(pairs) {
 			err := d.statDisplay.Write(fmt.Sprintf("    %s: %d\n", pairs[i].Key, pairs[i].Value))
 			if err != nil {
 				panic(err)
 			}
 		} else {
+			// display an empty line
 			err := d.statDisplay.Write(fmt.Sprintf("\n"))
 			if err != nil {
 				panic(err)
@@ -74,8 +87,11 @@ func (d *Displayer) displayPairs(pairs []monitoring.Pair) {
 		}
 	}
 }
-
-func (d *Displayer) displayInfo(stat monitoring.StatRecord) {
+// displayInfo displays all the information on the statDisplay:
+// 		The pairs of each section/method/status
+// 		The number of requests
+// 		The number of bytes
+func (d *Display) displayInfo(stat monitoring.StatRecord) {
 	if err := d.statDisplay.Write("\nTop sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		panic(err)
 	}
@@ -108,14 +124,14 @@ func (d *Displayer) displayInfo(stat monitoring.StatRecord) {
 }
 
 func fmtDuration(d time.Duration) string {
-	uptime := int(d) / 1000000000
-	s := uptime % 60
-	m := uptime / 60 % 60
-	h := uptime / 3600
+	//uptime := int(d) / 1000000000
+	s := d % time.Second*60
+	m := d / time.Second*60 % time.Second*60
+	h := d / time.Second*3600
 	return fmt.Sprintf("%02dh%02dmin%02ds", h, m, s)
 }
 
-func (d *Displayer) update(ctx context.Context) {
+func (d *Display) update(ctx context.Context) {
 	startTime := time.Now().Round(time.Second)
 	ticker := time.NewTicker(time.Second)
 	for {
@@ -123,7 +139,7 @@ func (d *Displayer) update(ctx context.Context) {
 
 		case <-ticker.C:
 			d.uptimeDisplay.Reset()
-			if err := d.uptimeDisplay.Write(fmt.Sprintf("%s", time.Since(startTime).Round(time.Second).String())); err != nil {
+			if err := d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second)))); err != nil {
 				panic(err)
 			}
 		case info := <-d.StatChan:
@@ -151,19 +167,24 @@ func (d *Displayer) update(ctx context.Context) {
 	}
 }
 
-func (d *Displayer) Run() {
+// Run is the main function of the Display
+func (d *Display) Run() {
+	// Run a goroutine to update the display information
 	go d.update(d.ctx)
+
+	// If q is pressed, exit
 	quitter := func(k *terminalapi.Keyboard) {
 		if k.Key == 'q' || k.Key == 'Q' {
 			d.cancel()
 		}
 	}
-	container.SplitPercent(40)
+	// Create a new global box
 	box, err := termbox.New()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// Create containers
+	// Containers are responsible for the layout of the dashboard
 	container, err := container.New(
 		box,
 		container.Border(linestyle.Light),
@@ -194,13 +215,14 @@ func (d *Displayer) Run() {
 				),
 			),
 		))
-
+	// Defer the closing
 	defer box.Close()
 
 	if err != nil {
 		panic(err)
 	}
 
+	// Run the dashboard
 	if err := termdash.Run(d.ctx, box, container, termdash.KeyboardSubscriber(quitter)); err != nil {
 		panic(err)
 	}

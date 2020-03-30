@@ -33,15 +33,15 @@ func main() {
 	alertChan := make(chan monitoring.AlertRecord)
 
 	// Create a new monitor and a new display with the given parameters
-	monitor := monitoring.New(*logFile, displayChan, alertChan, *timeWindow, *updateFreq, *threshold, ctx)
-	display := display.New(displayChan, alertChan, ctx, cancel)
+	monitor := monitoring.New(ctx, *logFile, displayChan, alertChan, *timeWindow, *updateFreq, *threshold)
+	display := display.New(ctx, cancel, displayChan, alertChan)
 
 	// If the app is running in demo mode, write concurrently logs to the log file
 	if *isDemo {
 		// Get a random seed
 		rand.Seed(time.Now().UnixNano())
 		// Write logs in a goroutine
-		go monitoring.LogGenerator(*logFile, ctx)
+		go monitoring.LogGenerator(ctx, *logFile)
 	}
 
 	// Run the monitor in a goroutine
