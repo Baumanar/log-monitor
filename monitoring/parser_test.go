@@ -13,12 +13,12 @@ func Test_parseLogLine(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
-		want    LogRecord
+		want    *LogRecord
 		wantErr error
 	}{
 		{"test1",
-			"53.120.219.15 - paul [27/March/2020:12:10:41 +0100] \"GET /posts/view.html HTTP/1.0\" 403 5026",
-			LogRecord{
+			"53.120.219.15 - paul [27/March/2020:12:10:41 +0100] \"GET /posts/r/a/view.html HTTP/1.0\" 403 5026",
+			&LogRecord{
 				remotehost: "53.120.219.15",
 				rfc931:     "-",
 				authuser:   "paul",
@@ -34,7 +34,7 @@ func Test_parseLogLine(t *testing.T) {
 
 		{"test2",
 			"141.146.202.67 - jill [27/March/2020:12:16:36 +0100] \"PUT /login/user?id=123 HTTP/1.0\" 200 1353",
-			LogRecord{
+			&LogRecord{
 				remotehost: "141.146.202.67",
 				rfc931:     "-",
 				authuser:   "jill",
@@ -50,7 +50,7 @@ func Test_parseLogLine(t *testing.T) {
 		// test with additional information
 		{"test3",
 			"141.146.202.67 1234 jill [27/March/2020:12:16:36 +0100] \"PUT /login/user?id=123 HTTP/1.0\" 200 1353 \"Mozilla/4.08 [en] (Win98; I ;Nav)\"",
-			LogRecord{
+			&LogRecord{
 				remotehost: "141.146.202.67",
 				rfc931:     "1234",
 				authuser:   "jill",
@@ -66,19 +66,19 @@ func Test_parseLogLine(t *testing.T) {
 		// test with bad formatting
 		{"test4",
 			"141.146.202.67 - jill [27/March/2020:12:16:36 +0100]",
-			LogRecord{},
+			nil,
 			errors.New("Invalid log format."),
 		},
 
 		{"test5",
 			"[27/March/2020:12:16:36 +0100] 141.146.202.67 - jill ",
-			LogRecord{},
+			nil,
 			errors.New("Invalid log format."),
 		},
 		// test with empty string
 		{"test6",
 			"",
-			LogRecord{},
+			nil,
 			errors.New("Invalid log format."),
 		},
 	}

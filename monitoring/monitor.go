@@ -18,7 +18,8 @@ const sleepTime = 50
 type LogMonitor struct {
 	// The log file to read
 	LogFile string
-	// Time window for the alreting
+	// Time window for the alerting in seconds
+	// TimeWindow*Threshold gives the maximum number of logs before alerting (by default 120*10=1200 logs in 2min)
 	TimeWindow int
 	// number of seconds between each send to the display
 	UpdateFreq int
@@ -113,15 +114,16 @@ func (m *LogMonitor) alert() {
 	for _, t := range m.AlertTraffic {
 		numTraffic += t
 	}
-	// If the number of requests exceeds the threshold and the monitor was not in alert
+	// If the number of requests is above threshold*timeWindow and the monitor was not in alert
 	// set InAlert to true and send an AlertRecord to the display
 	if numTraffic > m.Threshold*m.TimeWindow && !m.InAlert {
+		m.InAlert = true
 		m.InAlert = true
 		m.AlertChan <- AlertRecord{
 			Alert:      true,
 			NumTraffic: numTraffic,
 		}
-		// If the number of requests is below the threshold and the monitor was in in alert
+		// If the number of requests is below threshold*timeWindow and the monitor was in in alert
 		// set InAlert to false and send an AlertRecord to the display
 	} else if numTraffic < m.Threshold*m.TimeWindow && m.InAlert {
 		m.InAlert = false

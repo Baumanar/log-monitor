@@ -29,6 +29,7 @@ type Display struct {
 	// alert text displaying the statistics
 	alertDisplay *text.Text
 	// histogram of the number of requests received
+	// the histogram does not show the number of requests, it just shows the evolution of the traffic
 	histogram *sparkline.SparkLine
 	// Global app context
 	ctx    context.Context
@@ -125,10 +126,10 @@ func (d *Display) displayInfo(stat monitoring.StatRecord) {
 }
 
 func fmtDuration(d time.Duration) string {
-	//uptime := int(d) / 1000000000
-	s := d % time.Second * 60
-	m := d / time.Second * 60 % time.Second * 60
-	h := d / time.Second * 3600
+	uptime := int(d) / 1000000000
+	s := uptime % 60
+	m := uptime / 60 % 60
+	h := uptime / 3600
 	return fmt.Sprintf("%02dh%02dmin%02ds", h, m, s)
 }
 

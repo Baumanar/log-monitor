@@ -20,9 +20,10 @@ func main() {
 	isDemo := flag.Bool("flagname", true, "demo or not")
 	logFile := flag.String("logfile", "/tmp/access.log", "demo or not")
 	timeWindow := flag.Int("time window", 120, "time window for alerting")
-	threshold := flag.Int("threshold", 120, "threshold for alerting")
+	threshold := flag.Int("threshold", 10, "threshold for alerting")
 	updateFreq := flag.Int("update frequency", 5, "update frequency of the statistics")
 
+	// Verify that the log file exists
 	if _, err := os.Stat(*logFile); os.IsNotExist(err) {
 		log.Fatal(fmt.Sprintf("file %s does not exist.", *logFile))
 	}
