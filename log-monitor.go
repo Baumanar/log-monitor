@@ -22,7 +22,6 @@ func main() {
 	timeWindow := flag.Int("timewindow", 120, "time window for alerting")
 	threshold := flag.Int("threshold", 10, "threshold for alerting")
 	updateFreq := flag.Int("updatefreq", 10, "update frequency of the statistics")
-
 	flag.Parse()
 
 	// Verify that the log file exists
