@@ -27,7 +27,6 @@ type LogMonitor struct {
 	InAlert bool
 	// Maximum number of request per second before alerting
 	Threshold      int
-	InvalidRecords int
 	// Current LogRecords
 	LogRecords []LogRecord
 	// Number of requests at each update, used for alerting
@@ -52,7 +51,6 @@ func New(ctx context.Context, cancel context.CancelFunc, logFile string, display
 		UpdateFreq:     updateFreq,
 		InAlert:        false,
 		Threshold:      threshold,
-		InvalidRecords: 0,
 		LogRecords:     make([]LogRecord, 0),
 		AlertTraffic:   make([]int, 0),
 		Mutex:          mutex,
@@ -95,9 +93,8 @@ func (m *LogMonitor) readLog() {
 				// Thread safety, add new logRecords
 				// Lock to avoid that the monitor flushes the array at the same time when sending statistics
 				m.Mutex.Lock()
-				if err != nil {
-					m.InvalidRecords++
-				} else {
+				// If the log has been correctly parsed, add it to the current record list
+				if err == nil {
 					m.LogRecords = append(m.LogRecords, *newRecord)
 				}
 				m.Mutex.Unlock()
@@ -144,7 +141,6 @@ func (m *LogMonitor) report() {
 	// Thread safety, add new logRecords
 	// Lock to avoid that the monitor adds new records at the same time it is flushing
 	m.LogRecords = nil
-	m.InvalidRecords = 0
 	m.Mutex.Unlock()
 	// Send stats using the StatCha
 	m.StatChan <- statRecord
@@ -152,7 +148,7 @@ func (m *LogMonitor) report() {
 
 // Run is the main function of the monitor
 func (m *LogMonitor) Run() {
-	// Concurrently red the log file
+	// Concurrently read the log file
 	go m.readLog()
 	// Do the alerting and send the statistics each UpdateFreq seconds
 	for {
@@ -160,7 +156,7 @@ func (m *LogMonitor) Run() {
 		// add the traffic number to the AlertTraffic array
 		m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
 		// If the length of the array is bigger than the window, remove the oldest traffic number
-		if len(m.AlertTraffic) > m.TimeWindow {
+		if len(m.AlertTraffic) > (m.TimeWindow/m.UpdateFreq) {
 			m.AlertTraffic = m.AlertTraffic[1:]
 		}
 		m.alert()

@@ -49,7 +49,7 @@ func getStats(records []LogRecord, k int) StatRecord {
 	for _, log := range records {
 		sectionMap[log.section]++
 		methodMap[log.method]++
-		statusMap[log.status]++
+		statusMap[processStatus(log.status)]++
 		bytesCount += log.bytesCount
 	}
 	return StatRecord{
@@ -68,6 +68,14 @@ func Min(x, y int) int {
 	}
 	return x
 }
+
+func processStatus(status string) string{
+	if len(status)==3{
+		return status[:1]+"xx"
+	}
+	return status
+}
+
 
 // getTopK return k pairs of (Key, Value) whose values are the highest in the countMap map
 // Returns an ordered array of Pair of size K, the first element of the array has the highest value

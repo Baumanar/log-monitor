@@ -17,11 +17,13 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Flags of the app
-	isDemo := flag.Bool("flagname", true, "demo or not")
-	logFile := flag.String("logfile", "/tmp/access.log", "demo or not")
-	timeWindow := flag.Int("time window", 120, "time window for alerting")
+	isDemo := flag.Bool("demo", false, "demo or not")
+	logFile := flag.String("logfile", "/tmp/access.log", "logfile path")
+	timeWindow := flag.Int("timewindow", 120, "time window for alerting")
 	threshold := flag.Int("threshold", 10, "threshold for alerting")
-	updateFreq := flag.Int("update frequency", 5, "update frequency of the statistics")
+	updateFreq := flag.Int("updatefreq", 10, "update frequency of the statistics")
+
+	flag.Parse()
 
 	// Verify that the log file exists
 	if _, err := os.Stat(*logFile); os.IsNotExist(err) {

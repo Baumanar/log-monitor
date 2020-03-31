@@ -66,32 +66,38 @@ func writeLogLine(logFile string) {
 
 // LogGenerator generates logs and writes them to the log file
 func LogGenerator(ctx context.Context, logFile string) {
-	startInterval := float64(5000)
+	startInterval := float64(4000)
 
-	counters := make([]float64, 0)
-	count := 1.0
-	for count < 50 {
-		counters = append(counters, count)
-		count++
-	}
-	for count > 1 {
-		counters = append(counters, count)
-		count--
-	}
+	//counters := make([]float64, 0)
+	addval := 1.0
+	count := 5.0
+	//for count < 50 {
+	//	counters = append(counters, count)
+	//	count++
+	//}
+	//for count > 1 {
+	//	counters = append(counters, count)
+	//	count--
+	//}
 	// the ticker duration changes at each tick
 	ticker := time.NewTicker(time.Duration(startInterval) * time.Millisecond)
-	idx := 0
 
 	for {
 		select {
 		case <-ticker.C:
 			writeLogLine(logFile)
 
-			rand := rand.Float64() * 100
-			//log.Println("ticker accelerating to " + fmt.Sprint(start_interval/counters[idx]+rand) + " ms")
+			rand := rand.Float64() * 50
+			//log.Println("ticker accelerating to " + fmt.Sprint(startInterval/count+rand) + " ms count: ", count)
 			ticker.Stop()
-			ticker = time.NewTicker(time.Duration(startInterval/counters[idx]+rand) * time.Millisecond)
-			idx = (idx + 1) % 98
+			ticker = time.NewTicker(time.Duration(startInterval/count+rand) * time.Millisecond)
+			if count > 100{
+				addval = -0.1
+			}
+			if count < 10 {
+				addval = +0.1
+			}
+			count += addval
 		case <-ctx.Done():
 			return
 		}

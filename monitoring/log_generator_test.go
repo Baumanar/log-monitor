@@ -3,6 +3,7 @@ package monitoring
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"os"
@@ -61,6 +62,21 @@ func Test_writeLogLine(t *testing.T) {
 			if err != nil{
 				t.Errorf("readLog() \nwrote = %v lines \nwant %v lines", count, tt.lineNum)
 			}
+		})
+	}
+}
+
+func TestLogGenerator(t *testing.T) {
+	ctx, _ := context.WithCancel(context.Background())
+
+	tests := []struct {
+		name string
+	}{
+		{"a"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			LogGenerator(ctx, "")
 		})
 	}
 }
