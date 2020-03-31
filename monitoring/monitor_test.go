@@ -5,56 +5,105 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 )
 
 // TestLogMonitor_readLog tests the readLog function
 func TestLogMonitor_readLog(t *testing.T) {
-	ctx, _ := context.WithCancel(context.Background())
 	// Create or empty the test log file
-	_, err := os.Create("test.log")
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	tests := []struct {
 		name string
 		want int
 	}{
-		{"test0", 1},
+		//{"test0", 1},
 		{"test1", 10},
-		{"test2", 100},
-		{"test3", 1000},
-		{"test4", 5000},
+		{"test2", 456},
+		{"test3", 789},
+		{"test4", 499},
 		{"test5", 10000},
 	}
-	// Write some lines in the log file
-	for i := 0; i < 50; i++ {
-		writeLogLine("test.log")
-	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+
+
+			_, err := os.Create("test.log")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			//Write some lines in the log file
+			for i := 0; i < 50; i++ {
+				writeLogLine("test.log")
+			}
+
 			// Create a new monitor
 			displayChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, "test.log", displayChan, alertChan, 10, 5, 10)
-			// Write the log file concurrently
-			go func() {
-				for i := 0; i < tt.want; i++ {
-					writeLogLine("test.log")
-				}
-			}()
+			monitor := New(ctx, cancel,"test.log", displayChan, alertChan, 10, 5, 10)
+
 			// Check for new lines
+
 			go monitor.readLog()
-			// Sleep for a short time to let the monitor compute
-			time.Sleep(10 * time.Second)
-			ctx.Done()
+			// Let a short time for the monitor to get at the end of the file
+			time.Sleep(500 * time.Millisecond)
+
+			// Write the log file
+			for i := 0; i < tt.want; i++ {
+				writeLogLine("test.log")
+			}
+			// Sleep for a short time to let the monitor compute and finish
+			time.Sleep(1000 * time.Millisecond)
+
 			if len(monitor.LogRecords) != tt.want {
 				t.Errorf("readLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
+
+			err = os.Remove("test.log")
+			if err != nil{
+				log.Fatal(err)
+			}
 		})
 	}
+
 }
+
+func TestLogMonitor_readLog1(t *testing.T) {
+
+	t.Run("test cancellation", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+
+		_, err := os.Create("test.log")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Create a new monitor
+		displayChan := make(chan StatRecord)
+		alertChan := make(chan AlertRecord)
+		monitor := New(ctx, cancel,"test.log", displayChan, alertChan, 10, 5, 10)
+
+		// run the reading
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			go monitor.readLog()
+			wg.Done()
+		}()
+		time.Sleep(time.Millisecond*50)
+		go func() {
+			cancel()
+			wg.Done()
+		}()
+		wg.Wait()
+	})
+}
+
 
 func TestLogMonitor_alert(t *testing.T) {
 
@@ -105,13 +154,13 @@ func TestLogMonitor_alert(t *testing.T) {
 	}
 
 	// Run tests
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a new monitor
 			displayChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, "test.log", displayChan, alertChan, tt.timeWindow, 5, tt.threshold)
+			monitor := New(ctx, cancel, "test.log", displayChan, alertChan, tt.timeWindow, 5, tt.threshold)
 			// Init the alert state
 			monitor.InAlert = tt.startState
 			go func() {
@@ -165,14 +214,14 @@ func TestLogMonitor_report(t *testing.T) {
 		},
 	}
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
 			displayChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, "test.log", displayChan, alertChan, 120, 5, 10)
+			monitor := New(ctx, cancel, "test.log", displayChan, alertChan, 120, 5, 10)
 			go func() {
 				monitor.LogRecords = tt.logRecords
 				monitor.report()

@@ -39,11 +39,12 @@ type LogMonitor struct {
 	// channel to send alerts to the display
 	AlertChan chan AlertRecord
 	// Global app context
-	Ctx context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // New returns a new LogMonitor with the specified parameters
-func New(ctx context.Context, logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
+func New(ctx context.Context, cancel context.CancelFunc, logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
 	var mutex sync.Mutex
 	monitor := &LogMonitor{
 		LogFile:        logFile,
@@ -57,7 +58,8 @@ func New(ctx context.Context, logFile string, displayChan chan StatRecord, alert
 		Mutex:          mutex,
 		StatChan:       displayChan,
 		AlertChan:      alertChan,
-		Ctx:            ctx,
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 	return monitor
 }
@@ -72,7 +74,6 @@ func (m *LogMonitor) readLog() {
 	_, err := file.Seek(0, 2)
 	if err != nil {
 		log.Fatal()
-		m.Ctx.Done()
 	}
 
 	// Create a buffer for reading
@@ -80,13 +81,13 @@ func (m *LogMonitor) readLog() {
 	var line string
 	for {
 		select {
-		case <-m.Ctx.Done():
+		case <-m.ctx.Done():
 			return
 		default:
 			// Read the file to the end of the current line
 			line, err = reader.ReadString('\n')
 			// If no new line was found, sleep for a short time to avoid overcomputing
-			if err == io.EOF || line == "" {
+			if err == io.EOF{
 				time.Sleep(time.Millisecond * sleepTime)
 			} else if err != io.EOF {
 				// A new line has been found,  parse if to create a new logRecord
