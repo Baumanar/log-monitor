@@ -47,10 +47,10 @@ func TestLogMonitor_readLog(t *testing.T) {
 			// Check for new lines
 			go monitor.readLog()
 			// Sleep for a short time to let the monitor compute
-			time.Sleep(2 * time.Second)
+			time.Sleep(10 * time.Second)
 			ctx.Done()
 			if len(monitor.LogRecords) != tt.want {
-				t.Errorf("readLog() \nread = %v lines \nwant %v lines", monitor.LogRecords, tt.want)
+				t.Errorf("readLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
 		})
 	}
