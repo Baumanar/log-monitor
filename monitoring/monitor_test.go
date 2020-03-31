@@ -63,11 +63,12 @@ func TestLogMonitor_readLog(t *testing.T) {
 				t.Errorf("readLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
 
-			err = os.Remove("test.log")
-			if err != nil{
-				log.Fatal(err)
-			}
+
 		})
+	}
+	err := os.Remove("test.log")
+	if err != nil{
+		log.Fatal(err)
 	}
 
 }
