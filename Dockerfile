@@ -17,9 +17,5 @@ RUN go get -d -v ./...
 RUN go build -o /go/bin/log-monitor
 
 
-## Distroless execution image
-#FROM gcr.io/distroless/base
-#COPY --from=petname-builder /go/bin/app /
-#COPY .seed.yaml $HOME/.seed.yaml
 
 ENTRYPOINT ["/go/bin/log-monitor"]
