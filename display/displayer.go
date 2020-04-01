@@ -42,19 +42,19 @@ func New(ctx context.Context, cancel context.CancelFunc, statChan chan monitorin
 	// Initialize displays
 	uptimeDisplay, err := text.New(text.WrapAtWords())
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	statDisplay, err := text.New(text.WrapAtWords())
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	alertDisplay, err := text.New(text.RollContent(), text.WrapAtWords())
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	histogram, err := sparkline.New(sparkline.Color(cell.ColorCyan))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	displayer := &Display{
@@ -76,16 +76,10 @@ func (d *Display) DisplayPairs(pairs []monitoring.Pair) {
 	for i := 0; i < 5; i++ {
 		// display each pair on a row
 		if i < len(pairs) {
-			err := d.statDisplay.Write(fmt.Sprintf("    %s: %d\n", pairs[i].Key, pairs[i].Value))
-			if err != nil {
-				panic(err)
-			}
+			d.statDisplay.Write(fmt.Sprintf("    %s: %d\n", pairs[i].Key, pairs[i].Value))
 		} else {
 			// display an empty line
-			err := d.statDisplay.Write(fmt.Sprintf("\n"))
-			if err != nil {
-				panic(err)
-			}
+			d.statDisplay.Write(fmt.Sprintf("\n"))
 		}
 	}
 }
@@ -96,32 +90,18 @@ func (d *Display) DisplayPairs(pairs []monitoring.Pair) {
 // 		The number of bytes
 func (d *Display) DisplayInfo(stat monitoring.StatRecord) {
 
-	if err := d.statDisplay.Write(fmt.Sprintf("Number of requests: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
-	if err := d.statDisplay.Write(fmt.Sprintf("%d\n", stat.NumRequests)); err != nil {
-		panic(err)
-	}
-	if err := d.statDisplay.Write(fmt.Sprintf("Number of bytes transferred: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
-	if err := d.statDisplay.Write(fmt.Sprintf("%s\n", stat.BytesCount)); err != nil {
-		panic(err)
-	}
+	d.statDisplay.Write(fmt.Sprintf("Number of requests: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow)))
+	d.statDisplay.Write(fmt.Sprintf("%d\n", stat.NumRequests))
+	d.statDisplay.Write(fmt.Sprintf("Number of bytes transferred: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow)))
+	d.statDisplay.Write(fmt.Sprintf("%s\n", stat.BytesCount))
 
-	if err := d.statDisplay.Write("\nTop sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
+	d.statDisplay.Write("\nTop sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow)))
 	d.DisplayPairs(stat.TopSections)
 
-	if err := d.statDisplay.Write("Top sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
+	d.statDisplay.Write("Top sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow)))
 	d.DisplayPairs(stat.TopMethods)
 
-	if err := d.statDisplay.Write("Top status: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
+	d.statDisplay.Write("Top status: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow)))
 	d.DisplayPairs(stat.TopStatus)
 }
 
@@ -145,15 +125,12 @@ func (d *Display) Update(ctx context.Context) {
 		// Update uptime each second
 		case <-ticker.C:
 			d.uptimeDisplay.Reset()
-			if err := d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second)))); err != nil {
-				panic(err)
-			}
+			d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second))))
 			// New statistics received
 		case info, ok := <-d.StatChan:
 			if ok {
-				if err := d.histogram.Add([]int{info.NumRequests}); err != nil {
-					panic(err)
-				}
+				// add the number of requests to the histogram
+				d.histogram.Add([]int{info.NumRequests})
 				// Clear the past information
 				d.statDisplay.Reset()
 				// Display new information
@@ -166,15 +143,11 @@ func (d *Display) Update(ctx context.Context) {
 			if ok {
 				if alert.Alert {
 					// If alert is true, display it in red
-					if err := d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
-						panic(err)
-					}
+					d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed)))
 
 				} else {
 					// If the alert recovered, display it in green
-					if err := d.alertDisplay.Write(fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorGreen))); err != nil {
-						panic(err)
-					}
+					d.alertDisplay.Write(fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorGreen)))
 				}
 			} else {
 				d.cancel()
@@ -237,11 +210,9 @@ func (d *Display) Run() {
 	defer box.Close()
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// Run the dashboard
-	if err := termdash.Run(d.ctx, box, container, termdash.KeyboardSubscriber(quitter)); err != nil {
-		panic(err)
-	}
+	termdash.Run(d.ctx, box, container, termdash.KeyboardSubscriber(quitter))
 }

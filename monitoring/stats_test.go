@@ -18,7 +18,7 @@ func Test_processStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := processStatus(tt.input); got != tt.want {
+			if got := ProcessStatus(tt.input); got != tt.want {
 				t.Errorf("processStatus() = %v, want %v", got, tt.want)
 			}
 		})
@@ -64,7 +64,7 @@ func Test_formatByteCount(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := formatByteCount(tt.input); got != tt.want {
+			if got := FormatByteCount(tt.input); got != tt.want {
 				t.Errorf("formatByteCount() = %v, want %v", got, tt.want)
 			}
 		})

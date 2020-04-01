@@ -3,6 +3,7 @@ package monitoring
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -55,12 +56,12 @@ func WriteLogLine(logFile string) {
 	// Open file in append mode to write log lines at the end of the file
 	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer f.Close()
 
 	if _, err = f.WriteString(GenerateLog()); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 

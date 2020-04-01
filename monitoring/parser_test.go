@@ -85,7 +85,7 @@ func Test_parseLogLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseLogLine(tt.input)
+			got, err := ParseLogLine(tt.input)
 
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseLogLine() \ngot = %v \nwant %v", got, tt.want)

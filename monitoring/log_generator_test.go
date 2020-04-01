@@ -53,7 +53,7 @@ func Test_writeLogLine(t *testing.T) {
 			}
 			// Write a certain number of lines
 			for i := 0; i < tt.lineNum; i++ {
-				writeLogLine("test.log")
+				WriteLogLine("test.log")
 			}
 			file, _ := os.Open("test.log")
 			reader := bufio.NewReader(file)

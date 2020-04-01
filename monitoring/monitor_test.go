@@ -36,7 +36,7 @@ func TestLogMonitor_readLog(t *testing.T) {
 
 			//Write some lines in the log file
 			for i := 0; i < 50; i++ {
-				writeLogLine("test.log")
+				WriteLogLine("test.log")
 			}
 
 			// Create a new monitor
@@ -49,7 +49,7 @@ func TestLogMonitor_readLog(t *testing.T) {
 				time.Sleep(100 * time.Millisecond)
 				// Write the log file
 				for i := 0; i < tt.want; i++ {
-					writeLogLine("test.log")
+					WriteLogLine("test.log")
 				}
 				// Sleep for a short time to let the monitor compute and finish
 				time.Sleep(200 * time.Millisecond)
