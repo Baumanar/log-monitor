@@ -7,7 +7,13 @@
 ![Build](https://travis-ci.org/Baumanar/log-monitor.svg?branch=master) 
 [![codecov](https://codecov.io/gh/Baumanar/log-monitor/branch/master/graph/badge.svg)](https://codecov.io/gh/Baumanar/log-monitor)
 
-A simple console program that monitors HTTP traffic on your machine. Listens to an actively written log file and displays statistics
+A simple console program that monitors HTTP traffic on your machine. Listens to an actively written log file and displays statistics. 
+- The console app displays stats every 10s about the traffic during those 10s: the sections of the web site with the most hits, as well 
+as interesting summary statistics on the traffic as a whole.
+- Whenever total traffic for the past 2 minutes exceeds a certain number on average, the app displays a message saying that “High traffic 
+generated an alert - hits = {value}, triggered at {time}”. The default threshold is be 10 requests per second, and is be overridable.
+- Whenever the total traffic drops again below that value on average for the past 2 minutes, the app displays another message detailing 
+when the alert recovered
 
 ![HTTP Log-monitor](images/demo.gif)
 
