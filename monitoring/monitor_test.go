@@ -269,3 +269,60 @@ func TestLogMonitor_Run(t *testing.T) {
 		log.Fatal(err)
 	}
 }
+
+
+// Helper func for TestLogMonitor_Run1
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+// Checks if alertTraffic reaches maximum size and does not goes over this size
+func TestLogMonitor_Run1(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"cancel_test"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := os.Create("test.log")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			// Make buffered channels of size 3 so they are not blocking, we won't use them here
+			statChan := make(chan StatRecord)
+			alertChan := make(chan AlertRecord)
+			// The size of the alertTraffic should be maximum 3 and be updated every second
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 3, 1, 10)
+			monitor.LogRecords = []LogRecord{}
+			go func() {
+				// Let the monitor run for 5 seconds
+				ticker := time.NewTicker(time.Second * time.Duration(5))
+				// counter ton compare the size of AlertTraffic a each tick
+				counter := 1
+				for {
+						select {
+						case <-monitor.StatChan:
+							if len(monitor.AlertTraffic) != Min(counter, 3) {
+								t.Errorf("monitor.LogRecords should be maximum %d: got: %d", Min(counter, 3),len(monitor.AlertTraffic))
+							}
+							counter++
+						case <-ticker.C:
+							cancel()
+						}
+					}
+			}()
+			// Start log generation, if should be stopped after 1s
+			monitor.Run()
+		})
+	}
+	err := os.Remove("test.log")
+	if err != nil {
+		log.Fatal(err)
+	}
+}

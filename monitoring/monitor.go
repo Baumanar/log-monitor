@@ -22,7 +22,7 @@ type LogMonitor struct {
 	// TimeWindow*Threshold gives the maximum number of logs before alerting (by default 120*10=1200 logs in 2min)
 	TimeWindow int
 	// number of seconds between each send to the display
-	UpdateFreq int
+	UpdateInterval int
 	// Current Alert status
 	InAlert bool
 	// Maximum number of request per second before alerting
@@ -43,21 +43,21 @@ type LogMonitor struct {
 }
 
 // New returns a new LogMonitor with the specified parameters
-func New(ctx context.Context, cancel context.CancelFunc, logFile string, statChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
+func New(ctx context.Context, cancel context.CancelFunc, logFile string, statChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateInterval int, threshold int) *LogMonitor {
 	var mutex sync.Mutex
 	monitor := &LogMonitor{
-		LogFile:      logFile,
-		TimeWindow:   timeWindow,
-		UpdateFreq:   updateFreq,
-		InAlert:      false,
-		Threshold:    threshold,
-		LogRecords:   make([]LogRecord, 0),
-		AlertTraffic: make([]int, 0),
-		Mutex:        mutex,
-		StatChan:     statChan,
-		AlertChan:    alertChan,
-		ctx:          ctx,
-		cancel:       cancel,
+		LogFile:        logFile,
+		TimeWindow:     timeWindow,
+		UpdateInterval: updateInterval,
+		InAlert:        false,
+		Threshold:      threshold,
+		LogRecords:     make([]LogRecord, 0),
+		AlertTraffic:   make([]int, 0),
+		Mutex:          mutex,
+		StatChan:       statChan,
+		AlertChan:      alertChan,
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 	return monitor
 }
@@ -150,15 +150,15 @@ func (m *LogMonitor) Report() {
 func (m *LogMonitor) Run() {
 	// Concurrently read the log file
 	go m.ReadLog()
-	// Do the alerting and send the statistics each UpdateFreq seconds with a ticker
-	ticker := time.NewTicker(time.Second * time.Duration(m.UpdateFreq))
+	// Do the alerting and send the statistics each UpdateInterval seconds with a ticker
+	ticker := time.NewTicker(time.Second * time.Duration(m.UpdateInterval))
 	for {
 		select {
 		case <-ticker.C:
 			// add the traffic number to the AlertTraffic array
 			m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
-			// If the length of the array is bigger than the window/updateFreq, remove the oldest traffic number
-			if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateFreq) {
+			// If the length of the array is bigger than the window/updateInterval, remove the oldest traffic number
+			if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateInterval) {
 				m.AlertTraffic = m.AlertTraffic[1:]
 			}
 			m.Alert()

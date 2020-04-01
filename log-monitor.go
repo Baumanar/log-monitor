@@ -23,7 +23,7 @@ func main() {
 	logFile := flag.String("logfile", "/tmp/access.log", "logfile path")
 	timeWindow := flag.Int("timewindow", 120, "time window for alerting in seconds")
 	threshold := flag.Int("threshold", 10, "threshold for alerting in requests per second")
-	updateFreq := flag.Int("updatefreq", 10, "number of seconds between each statistic update")
+	updateInterval := flag.Int("updateInterval", 10, "number of seconds between each statistic update")
 	flag.Parse()
 
 	// Verify that the log file exists
@@ -37,7 +37,7 @@ func main() {
 	alertChan := make(chan monitoring.AlertRecord)
 
 	// Create a new monitor and a new display with the given parameters
-	monitor := monitoring.New(ctx, cancel, *logFile, statChan, alertChan, *timeWindow, *updateFreq, *threshold)
+	monitor := monitoring.New(ctx, cancel, *logFile, statChan, alertChan, *timeWindow, *updateInterval, *threshold)
 	display := display.New(ctx, cancel, statChan, alertChan)
 
 	// If the app is running in demo mode, write concurrently logs to the log file

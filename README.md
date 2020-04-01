@@ -51,14 +51,14 @@ Usage of ./log-monitor:
     	threshold for alerting in requests per second (default 10)
   -timewindow int
     	time window for alerting in seconds (default 120)
-  -updatefreq int
+  -updateInterval int
     	number of seconds between each statistic update (default 10)
 ```
 type ./log-monitor -help to display this message.
 
 Example:
 ```sh
-./log-monitor -logfile /tmp/access.log -threshold 10 -timewindow 60 -updatefreq 5
+./log-monitor -logfile /tmp/access.log -threshold 10 -timewindow 60 -updateInterval 5
 ```
 
 ## Demo
@@ -75,7 +75,7 @@ The architecture of the log-monitor has two main components:
 The monitor communicates with the display by using two channels: one for statistics, one for alerts
 
 The monitor listens to the log file and continuously checks for new logs. It keeps trace of the logs 
-written during the last ```updatefreq``` seconds. Every ```updatefreq``` it computes statistics of the current 
+written during the last ```updateInterval``` seconds. Every ```updateInterval``` it computes statistics of the current 
 logs and sends the computed statistics to the display by using the statistics channel. The statistics sent are:
 - The 5 most requested sections
 - The 5 most used  HTTP methods
