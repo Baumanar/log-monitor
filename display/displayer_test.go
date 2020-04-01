@@ -2,7 +2,6 @@ package display
 
 import (
 	"context"
-	"fmt"
 	"github.com/Baumanar/log-monitor/monitoring"
 	"strconv"
 	"testing"
@@ -76,12 +75,6 @@ func TestDisplay_Run(t *testing.T) {
 			}()
 			// Run the display, It should stop when the channels are closed
 			display.Run()
-
-			fmt.Println("Ok")
-
-
-
-
 		})
 	}
 }
