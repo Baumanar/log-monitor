@@ -43,21 +43,21 @@ type LogMonitor struct {
 }
 
 // New returns a new LogMonitor with the specified parameters
-func New(ctx context.Context, cancel context.CancelFunc, logFile string, displayChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
+func New(ctx context.Context, cancel context.CancelFunc, logFile string, statChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateFreq int, threshold int) *LogMonitor {
 	var mutex sync.Mutex
 	monitor := &LogMonitor{
-		LogFile:        logFile,
-		TimeWindow:     timeWindow,
-		UpdateFreq:     updateFreq,
-		InAlert:        false,
-		Threshold:      threshold,
-		LogRecords:     make([]LogRecord, 0),
-		AlertTraffic:   make([]int, 0),
-		Mutex:          mutex,
-		StatChan:       displayChan,
-		AlertChan:      alertChan,
-		ctx:            ctx,
-		cancel:         cancel,
+		LogFile:      logFile,
+		TimeWindow:   timeWindow,
+		UpdateFreq:   updateFreq,
+		InAlert:      false,
+		Threshold:    threshold,
+		LogRecords:   make([]LogRecord, 0),
+		AlertTraffic: make([]int, 0),
+		Mutex:        mutex,
+		StatChan:     statChan,
+		AlertChan:    alertChan,
+		ctx:          ctx,
+		cancel:       cancel,
 	}
 	return monitor
 }

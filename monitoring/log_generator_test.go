@@ -3,10 +3,12 @@ package monitoring
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 
@@ -30,7 +32,7 @@ func lineCounter(r io.Reader) (int, error) {
 	}
 }
 
-
+// Test_writeLogLine checks if the number of lines written by the log_generator is correct
 func Test_writeLogLine(t *testing.T) {
 	type args struct {
 		logFile string
@@ -63,23 +65,41 @@ func Test_writeLogLine(t *testing.T) {
 			}
 		})
 	}
+
+	err := os.Remove("test.log")
+	if err != nil{
+		log.Fatal(err)
+	}
 }
 
-//func TestLogGenerator(t *testing.T) {
-//	ctx, _ := context.WithCancel(context.Background())
-//	_, err := os.Create("test.log")
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	tests := []struct {
-//		name string
-//	}{
-//		{"a"},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			LogGenerator(ctx, "test.log")
-//		})
-//	}
-//}
+// Checks if the log_generator is able to exit when the cancellation function is called
+func TestLogGenerator(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"cancel_test"},
+	}
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+
+			_, err := os.Create("test.log")
+			if err != nil {
+				log.Fatal(err)
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+
+			// call cancel after 1s
+			go func() {
+				time.Sleep(1*time.Second)
+				cancel()
+			}()
+			// Start log generation, if should be stopped after 1s
+			LogGenerator(ctx, "test.log")
+		})
+	}
+	err := os.Remove("test.log")
+	if err != nil{
+		log.Fatal(err)
+	}
+}

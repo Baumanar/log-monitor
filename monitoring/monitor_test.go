@@ -42,9 +42,9 @@ func TestLogMonitor_readLog(t *testing.T) {
 			}
 
 			// Create a new monitor
-			displayChan := make(chan StatRecord)
+			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel,"test.log", displayChan, alertChan, 10, 5, 10)
+			monitor := New(ctx, cancel,"test.log", statChan, alertChan, 10, 5, 10)
 
 			// Check for new lines
 
@@ -85,9 +85,9 @@ func TestLogMonitor_readLog1(t *testing.T) {
 		}
 
 		// Create a new monitor
-		displayChan := make(chan StatRecord)
+		statChan := make(chan StatRecord)
 		alertChan := make(chan AlertRecord)
-		monitor := New(ctx, cancel,"test.log", displayChan, alertChan, 10, 5, 10)
+		monitor := New(ctx, cancel,"test.log", statChan, alertChan, 10, 5, 10)
 
 		// run the reading
 		var wg sync.WaitGroup
@@ -103,6 +103,12 @@ func TestLogMonitor_readLog1(t *testing.T) {
 		}()
 		wg.Wait()
 	})
+
+	err := os.Remove("test.log")
+	if err != nil{
+		log.Fatal(err)
+	}
+
 }
 
 
@@ -159,9 +165,9 @@ func TestLogMonitor_alert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a new monitor
-			displayChan := make(chan StatRecord)
+			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel, "test.log", displayChan, alertChan, tt.timeWindow, 5, tt.threshold)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, tt.timeWindow, 5, tt.threshold)
 			// Init the alert state
 			monitor.InAlert = tt.startState
 			go func() {
@@ -202,16 +208,16 @@ func TestLogMonitor_report(t *testing.T) {
 	}{
 		{"test0",
 			[]LogRecord{
-				{"a", "a", "a", "a", "a", "a", "a", "a", 2},
-				{"a", "a", "a", "a", "a", "a", "a", "a", 2},
-				{"a", "a", "a", "a", "a", "a", "a", "a", 2},
-				{"b", "b", "b", "b", "b", "b", "b", "b", 2}},
+				{"a", "a", "a", "a", "a", "a", "a", "a", 2000},
+				{"a", "a", "a", "a", "a", "a", "a", "a", 2000},
+				{"a", "a", "a", "a", "a", "a", "a", "a", 5000},
+				{"b", "b", "b", "b", "b", "b", "b", "b", 10000}},
 
 			StatRecord{[]Pair{{"a", 3}, {"b", 1}},
 				[]Pair{{"a", 3}, {"b", 1}},
 				[]Pair{{"a", 3}, {"b", 1}},
 				4,
-				8},
+				"19.0 kB"},
 		},
 	}
 
@@ -220,9 +226,9 @@ func TestLogMonitor_report(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			displayChan := make(chan StatRecord)
+			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel, "test.log", displayChan, alertChan, 120, 5, 10)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 5, 10)
 			go func() {
 				monitor.LogRecords = tt.logRecords
 				monitor.report()

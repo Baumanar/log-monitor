@@ -29,10 +29,10 @@ type LogRecord struct {
 	bytesCount int
 }
 
-// Compile the regex once
+// Compile the regex once and use it for every log line
 var regex = regexp.MustCompile(`(\S+)\s+(\S+)\s+(\S+)\s+(\[.+\])\s+\"([A-Z]+)\s+(\/[^\/]+)\/.+\s+(\S+)\"\s+(\S+)\s+(\S+)(.+)?`)
 
-// Parses a log record according to the w3c-formatted HTTP access log
+// Parses a log record according to the w3c-formatted HTTP access log and return the LogRecord associated
 func parseLogLine(input string) (*LogRecord, error) {
 	// log pattern
 

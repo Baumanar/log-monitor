@@ -30,13 +30,13 @@ func main() {
 	}
 
 	// Channel to display statistics
-	displayChan := make(chan monitoring.StatRecord)
+	statChan := make(chan monitoring.StatRecord)
 	// Channel to alert
 	alertChan := make(chan monitoring.AlertRecord)
 
 	// Create a new monitor and a new display with the given parameters
-	monitor := monitoring.New(ctx, cancel,*logFile, displayChan, alertChan, *timeWindow, *updateFreq, *threshold)
-	display := display.New(ctx, cancel, displayChan, alertChan)
+	monitor := monitoring.New(ctx, cancel,*logFile, statChan, alertChan, *timeWindow, *updateFreq, *threshold)
+	display := display.New(ctx, cancel, statChan, alertChan)
 
 	// If the app is running in demo mode, write concurrently logs to the log file
 	if *isDemo {

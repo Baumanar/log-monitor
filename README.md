@@ -74,10 +74,10 @@ The monitor also checks for alerts,
 if the average traffic during the last ```timewindow``` exceeds the threshold per second, an alert is sent to the display. 
 Alerts are sent by using the alert channel
 
-The displayer contains 4 pannels:
+The displayer contains 4 panels:
 - The uptime of the program
-- The information pannel on which statistics are displayed
-- The alert pannel on which alerts are displayed
+- The information panel on which statistics are displayed
+- The alert panel on which alerts are displayed
 - An histogram of the traffic evolution. The purpose of the histogram is just to give an intuition of the traffic evolution
 
 ## Improvements

@@ -48,3 +48,26 @@ func TestMin(t *testing.T) {
 		})
 	}
 }
+
+func Test_formatByteCount(t *testing.T) {
+	tests := []struct {
+		name string
+		input int
+		want string
+	}{
+		{"test0", 1000, "1.0 kB"},
+		{"test1", 230465, "230.5 kB"},
+		{"test2", 465900, "465.9 kB"},
+		{"test3", 465900132, "465.9 MB"},
+		{"test4", 465900132456, "465.9 GB"},
+		{"test5", 465900132451236, "465.9 TB"},
+		{"test6", 123, "123 B"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := formatByteCount(tt.input); got != tt.want {
+				t.Errorf("formatByteCount() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

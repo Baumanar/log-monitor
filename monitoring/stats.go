@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"fmt"
 	"sort"
 )
 
@@ -11,7 +12,8 @@ type StatRecord struct {
 	TopMethods  []Pair
 	TopStatus   []Pair
 	NumRequests int
-	BytesCount  int
+	// the number of byte send will already be formatted
+	BytesCount  string
 }
 
 // AlertRecord is the type passed from the Monitor to
@@ -43,7 +45,7 @@ func getStats(records []LogRecord, k int) StatRecord {
 	methodMap := make(map[string]int, 0)
 	statusMap := make(map[string]int, 0)
 	requests := len(records)
-	bytesCount := 0
+	var bytesCount int
 
 	// update maps and byteCount with each record
 	for _, log := range records {
@@ -57,7 +59,7 @@ func getStats(records []LogRecord, k int) StatRecord {
 		TopMethods:  getTopK(methodMap, k),
 		TopStatus:   getTopK(statusMap, k),
 		NumRequests: requests,
-		BytesCount:  bytesCount,
+		BytesCount:  formatByteCount(bytesCount),
 	}
 }
 
@@ -69,11 +71,27 @@ func Min(x, y int) int {
 	return x
 }
 
+// processStatus converts a status to its first number and converts the rest to x
 func processStatus(status string) string{
 	if len(status)==3{
 		return status[:1]+"xx"
 	}
 	return status
+}
+
+// Format byte count into kB/MB/GB
+func formatByteCount(b int) string {
+	const unit = 1000
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := unit, 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB",
+		float64(b)/float64(div), "kMGTPE"[exp])
 }
 
 

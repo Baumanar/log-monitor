@@ -33,6 +33,7 @@ type Display struct {
 	histogram *sparkline.SparkLine
 	// Global app context
 	ctx    context.Context
+	// cancel function for context cancellation
 	cancel context.CancelFunc
 }
 
@@ -94,6 +95,20 @@ func (d *Display) displayPairs(pairs []monitoring.Pair) {
 // 		The number of requests
 // 		The number of bytes
 func (d *Display) displayInfo(stat monitoring.StatRecord) {
+
+	if err := d.statDisplay.Write(fmt.Sprintf("Number of requests: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
+		panic(err)
+	}
+	if err := d.statDisplay.Write(fmt.Sprintf("%d\n", stat.NumRequests)); err != nil {
+		panic(err)
+	}
+	if err := d.statDisplay.Write(fmt.Sprintf("Number of bytes transferred: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
+		panic(err)
+	}
+	if err := d.statDisplay.Write(fmt.Sprintf("%s\n", stat.BytesCount)); err != nil {
+		panic(err)
+	}
+
 	if err := d.statDisplay.Write("\nTop sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		panic(err)
 	}
@@ -108,24 +123,13 @@ func (d *Display) displayInfo(stat monitoring.StatRecord) {
 		panic(err)
 	}
 	d.displayPairs(stat.TopStatus)
-
-	if err := d.statDisplay.Write(fmt.Sprintf("Number of requests: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
-	if err := d.statDisplay.Write(fmt.Sprintf("%d\n", stat.NumRequests)); err != nil {
-		panic(err)
-	}
-
-	if err := d.statDisplay.Write(fmt.Sprintf("Number of bytes: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
-		panic(err)
-	}
-	if err := d.statDisplay.Write(fmt.Sprintf("%d\n", stat.BytesCount)); err != nil {
-		panic(err)
-	}
-
 }
 
+
+// fmtDuration formats the uptime
 func fmtDuration(d time.Duration) string {
+	// Convert duration to int
+	// Quite inconvenient, but I did not find a way to keep it to duration
 	uptime := int(d) / 1000000000
 	s := uptime % 60
 	m := uptime / 60 % 60
@@ -133,35 +137,50 @@ func fmtDuration(d time.Duration) string {
 	return fmt.Sprintf("%02dh%02dmin%02ds", h, m, s)
 }
 
+// update updates all panels at once
 func (d *Display) update(ctx context.Context) {
 	startTime := time.Now().Round(time.Second)
 	ticker := time.NewTicker(time.Second)
 	for {
 		select {
-
+			// Update uptime each second
 		case <-ticker.C:
 			d.uptimeDisplay.Reset()
 			if err := d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second)))); err != nil {
 				panic(err)
 			}
-		case info := <-d.StatChan:
-
-			if err := d.histogram.Add([]int{info.NumRequests}); err != nil {
-				panic(err)
-			}
-			d.statDisplay.Reset()
-			d.displayInfo(info)
-
-		case alert := <-d.AlertChan:
-			if alert.Alert {
-				if err := d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
+			// New statistics received
+		case info, ok := <-d.StatChan:
+			if ok {
+				if err := d.histogram.Add([]int{info.NumRequests}); err != nil {
 					panic(err)
+				}
+				// Clear the past information
+				d.statDisplay.Reset()
+				// Display new information
+				d.displayInfo(info)
+			} else {
+				d.cancel()
+			}
+			// Alert received
+		case alert, ok := <-d.AlertChan:
+			if ok {
+				if alert.Alert {
+					// If alert is true, display it in red
+					if err := d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
+						panic(err)
+					}
+
+				} else {
+					// If the alert recovered, display it in green
+					if err := d.alertDisplay.Write(fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorGreen))); err != nil {
+						panic(err)
+					}
 				}
 			} else {
-				if err := d.alertDisplay.Write(fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorGreen))); err != nil {
-					panic(err)
-				}
+				d.cancel()
 			}
+
 		case <-ctx.Done():
 			return
 		}
@@ -170,7 +189,7 @@ func (d *Display) update(ctx context.Context) {
 
 // Run is the main function of the Display
 func (d *Display) Run() {
-	// Run a goroutine to update the display information
+	// Run a goroutine to update the all panels
 	go d.update(d.ctx)
 
 	// If q is pressed, exit

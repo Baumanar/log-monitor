@@ -65,39 +65,35 @@ func writeLogLine(logFile string) {
 }
 
 // LogGenerator generates logs and writes them to the log file
+// The evolution of the generation rate follows as triangle in order to generate alerts
 func LogGenerator(ctx context.Context, logFile string) {
 	startInterval := float64(4000)
 
-	//counters := make([]float64, 0)
-	addval := 1.0
+	// addVal will increment the counter
+	addVal := 1.0
+	// Count is the number with which the ticker interval varies
+	// range: 10 to 100
 	count := 5.0
-	//for count < 50 {
-	//	counters = append(counters, count)
-	//	count++
-	//}
-	//for count > 1 {
-	//	counters = append(counters, count)
-	//	count--
-	//}
+
 	// the ticker duration changes at each tick
 	ticker := time.NewTicker(time.Duration(startInterval) * time.Millisecond)
 
 	for {
 		select {
 		case <-ticker.C:
+			// When tick, write a log line
 			writeLogLine(logFile)
-
 			rand := rand.Float64() * 50
-			//log.Println("ticker accelerating to " + fmt.Sprint(startInterval/count+rand) + " ms count: ", count)
 			ticker.Stop()
+			// change the ticker duration
 			ticker = time.NewTicker(time.Duration(startInterval/count+rand) * time.Millisecond)
 			if count > 100{
-				addval = -0.1
+				addVal = -0.1
 			}
 			if count < 10 {
-				addval = +0.1
+				addVal = +0.1
 			}
-			count += addval
+			count += addVal
 		case <-ctx.Done():
 			return
 		}
