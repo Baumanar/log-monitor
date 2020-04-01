@@ -2,7 +2,6 @@ package monitoring
 
 import (
 	"errors"
-	"log"
 	"regexp"
 	"strconv"
 )
@@ -30,7 +29,7 @@ type LogRecord struct {
 }
 
 // Compile the regex once and use it for every log line
-var regex = regexp.MustCompile(`(\S+)\s+(\S+)\s+(\S+)\s+(\[.+\])\s+\"([A-Z]+)\s+(\/[^\/]+)\/.+\s+(\S+)\"\s+(\S+)\s+(\S+)(.+)?`)
+var regex = regexp.MustCompile(`(\S+)\s+(\S+)\s+(\S+)\s+(\[.+\])\s+\"([A-Z]+)\s+(\/[^\/]+)\/.+\s+(\S+)\"\s+(\S+)\s+([0-9]+|-)(.+)?`)
 
 // Parses a log record according to the w3c-formatted HTTP access log and return the LogRecord associated
 func ParseLogLine(input string) (*LogRecord, error) {
@@ -41,11 +40,15 @@ func ParseLogLine(input string) (*LogRecord, error) {
 	if len(matches) != 11 {
 		return nil, errors.New("Invalid log format.")
 	}
-	// return a new LogRecord instance
-	bytes, err := strconv.Atoi(matches[9])
-	if err != nil {
-		log.Fatal(err)
+	var bytes int
+	if matches[9] != "-"{
+		bytes, _ = strconv.Atoi(matches[9])
+	} else {
+		bytes = 0
 	}
+
+
+	// return a new LogRecord instance
 	return &LogRecord{
 		remotehost: matches[1],
 		rfc931:     matches[2],

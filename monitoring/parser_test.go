@@ -47,8 +47,23 @@ func Test_parseLogLine(t *testing.T) {
 			},
 			nil,
 		},
-		// test with additional information
 		{"test3",
+			"141.146.202.67 - jill [27/March/2020:12:16:36 +0100] \"PUT /login/user?id=123 HTTP/1.0\" 200 -",
+			&LogRecord{
+				remotehost: "141.146.202.67",
+				rfc931:     "-",
+				authuser:   "jill",
+				date:       "[27/March/2020:12:16:36 +0100]",
+				method:     "PUT",
+				section:    "/login",
+				protocol:   "HTTP/1.0",
+				status:     "200",
+				bytesCount: 0,
+			},
+			nil,
+		},
+		// test with additional information
+		{"test4",
 			"141.146.202.67 1234 jill [27/March/2020:12:16:36 +0100] \"PUT /login/user?id=123 HTTP/1.0\" 200 1353 \"Mozilla/4.08 [en] (Win98; I ;Nav)\"",
 			&LogRecord{
 				remotehost: "141.146.202.67",
@@ -64,19 +79,19 @@ func Test_parseLogLine(t *testing.T) {
 			nil,
 		},
 		// test with bad formatting
-		{"test4",
+		{"test5",
 			"141.146.202.67 - jill [27/March/2020:12:16:36 +0100]",
 			nil,
 			errors.New("Invalid log format."),
 		},
 
-		{"test5",
+		{"test6",
 			"[27/March/2020:12:16:36 +0100] 141.146.202.67 - jill ",
 			nil,
 			errors.New("Invalid log format."),
 		},
 		// test with empty string
-		{"test6",
+		{"test7",
 			"",
 			nil,
 			errors.New("Invalid log format."),
