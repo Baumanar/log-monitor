@@ -7,15 +7,14 @@ func Test_processStatus(t *testing.T) {
 		status string
 	}
 	tests := []struct {
-		name string
+		name  string
 		input string
-		want string
+		want  string
 	}{
 		{"test0", "400", "4xx"},
 		{"test1", "200", "2xx"},
 		{"test2", "3xx", "3xx"},
 		{"test3", "", ""},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -32,13 +31,13 @@ func TestMin(t *testing.T) {
 		y int
 	}
 	tests := []struct {
-		name string
+		name   string
 		inputX int
 		inputY int
-		want int
+		want   int
 	}{
-		{"test0", 3,2,2},
-		{"test0", 2,3,2},
+		{"test0", 3, 2, 2},
+		{"test0", 2, 3, 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,9 +50,9 @@ func TestMin(t *testing.T) {
 
 func Test_formatByteCount(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		input int
-		want string
+		want  string
 	}{
 		{"test0", 1000, "1.0 kB"},
 		{"test1", 230465, "230.5 kB"},

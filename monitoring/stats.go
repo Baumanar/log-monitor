@@ -13,7 +13,7 @@ type StatRecord struct {
 	TopStatus   []Pair
 	NumRequests int
 	// the number of byte send will already be formatted
-	BytesCount  string
+	BytesCount string
 }
 
 // AlertRecord is the type passed from the Monitor to
@@ -72,9 +72,9 @@ func Min(x, y int) int {
 }
 
 // processStatus converts a status to its first number and converts the rest to x
-func processStatus(status string) string{
-	if len(status)==3{
-		return status[:1]+"xx"
+func processStatus(status string) string {
+	if len(status) == 3 {
+		return status[:1] + "xx"
 	}
 	return status
 }
@@ -93,7 +93,6 @@ func formatByteCount(b int) string {
 	return fmt.Sprintf("%.1f %cB",
 		float64(b)/float64(div), "kMGTPE"[exp])
 }
-
 
 // getTopK return k pairs of (Key, Value) whose values are the highest in the countMap map
 // Returns an ordered array of Pair of size K, the first element of the array has the highest value

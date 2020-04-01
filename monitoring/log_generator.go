@@ -86,7 +86,7 @@ func LogGenerator(ctx context.Context, logFile string, startInterval float64) {
 			ticker.Stop()
 			// change the ticker duration
 			ticker = time.NewTicker(time.Duration(startInterval/count+rand) * time.Millisecond)
-			if count > 100{
+			if count > 100 {
 				addVal = -0.1
 			}
 			if count < 10 {

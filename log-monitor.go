@@ -37,7 +37,7 @@ func main() {
 	alertChan := make(chan monitoring.AlertRecord)
 
 	// Create a new monitor and a new display with the given parameters
-	monitor := monitoring.New(ctx, cancel,*logFile, statChan, alertChan, *timeWindow, *updateFreq, *threshold)
+	monitor := monitoring.New(ctx, cancel, *logFile, statChan, alertChan, *timeWindow, *updateFreq, *threshold)
 	display := display.New(ctx, cancel, statChan, alertChan)
 
 	// If the app is running in demo mode, write concurrently logs to the log file
@@ -55,4 +55,3 @@ func main() {
 	display.Run()
 
 }
-

@@ -1,5 +1,8 @@
 # HTTP Log-monitor
 
+
+[![Go Report Card](https://goreportcard.com/badge/)](https://goreportcard.com/report/github.com/ichbinfrog/petname) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/ichbinfrog/petname/blob/master/LICENSE) [![GoDoc](https://godoc.org/github.com/ichbinfrog/petname?status.svg)](https://godoc.org/github.com/ichbinfrog/petname) ![Build](https://travis-ci.org/ichbinfrog/petname.svg?branch=master) [![codecov](https://codecov.io/gh/ichbinfrog/petname/branch/master/graph/badge.svg)](https://codecov.io/gh/ichbinfrog/petname)
+
 A simple console program that monitors HTTP traffic on your machine. Listens to an actively written log file and displays statistics
 
 ![HTTP Log-monitor](images/demo.gif)

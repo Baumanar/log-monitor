@@ -29,7 +29,6 @@ func TestLogMonitor_readLog(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
-
 			_, err := os.Create("test.log")
 			if err != nil {
 				log.Fatal(err)
@@ -43,7 +42,7 @@ func TestLogMonitor_readLog(t *testing.T) {
 			// Create a new monitor
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel,"test.log", statChan, alertChan, 10, 5, 10)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 10, 5, 10)
 
 			go func() {
 				// Let a short time for the monitor to get at the end of the file
@@ -61,14 +60,13 @@ func TestLogMonitor_readLog(t *testing.T) {
 			// Check for new lines
 			monitor.readLog()
 
-
 			if len(monitor.LogRecords) != tt.want {
 				t.Errorf("readLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
 		})
 	}
 	err := os.Remove("test.log")
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -86,10 +84,10 @@ func TestLogMonitor_readLog1(t *testing.T) {
 		// Create a new monitor
 		statChan := make(chan StatRecord)
 		alertChan := make(chan AlertRecord)
-		monitor := New(ctx, cancel,"test.log", statChan, alertChan, 10, 5, 10)
+		monitor := New(ctx, cancel, "test.log", statChan, alertChan, 10, 5, 10)
 		// Wait for 1 second before cancelling
 		go func() {
-			time.Sleep(time.Second*1)
+			time.Sleep(time.Second * 1)
 			cancel()
 		}()
 		// run the reading
@@ -97,12 +95,11 @@ func TestLogMonitor_readLog1(t *testing.T) {
 	})
 
 	err := os.Remove("test.log")
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
 }
-
 
 func TestLogMonitor_alert(t *testing.T) {
 
@@ -260,7 +257,7 @@ func TestLogMonitor_Run(t *testing.T) {
 
 			// call cancel after 2 seconds
 			go func() {
-				time.Sleep(2*time.Second)
+				time.Sleep(2 * time.Second)
 				cancel()
 			}()
 			// Start log generation, if should be stopped after 1s
@@ -268,7 +265,7 @@ func TestLogMonitor_Run(t *testing.T) {
 		})
 	}
 	err := os.Remove("test.log")
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 }

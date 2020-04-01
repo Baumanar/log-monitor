@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-
 // Helper Func for Test_writeLogLine
 func lineCounter(r io.Reader) (int, error) {
 	buf := make([]byte, 32*1024)
@@ -38,7 +37,7 @@ func Test_writeLogLine(t *testing.T) {
 		logFile string
 	}
 	tests := []struct {
-		name string
+		name    string
 		lineNum int
 	}{
 		{"test0", 10},
@@ -53,21 +52,21 @@ func Test_writeLogLine(t *testing.T) {
 				log.Fatal(err)
 			}
 			// Write a certain number of lines
-			for i:=0;i<tt.lineNum;i++{
+			for i := 0; i < tt.lineNum; i++ {
 				writeLogLine("test.log")
 			}
 			file, _ := os.Open("test.log")
 			reader := bufio.NewReader(file)
 			// Count the number of lines written
 			count, err := lineCounter(reader)
-			if err != nil{
+			if err != nil {
 				t.Errorf("readLog() \nwrote = %v lines \nwant %v lines", count, tt.lineNum)
 			}
 		})
 	}
 
 	err := os.Remove("test.log")
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 }
@@ -91,7 +90,7 @@ func TestLogGenerator(t *testing.T) {
 
 			// call cancel after 1s
 			go func() {
-				time.Sleep(1*time.Second)
+				time.Sleep(1 * time.Second)
 				cancel()
 			}()
 			// Start log generation, if should be stopped after 1s
@@ -99,7 +98,7 @@ func TestLogGenerator(t *testing.T) {
 		})
 	}
 	err := os.Remove("test.log")
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 }

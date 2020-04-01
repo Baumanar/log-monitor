@@ -26,7 +26,7 @@ type LogMonitor struct {
 	// Current alert status
 	InAlert bool
 	// Maximum number of request per second before alerting
-	Threshold      int
+	Threshold int
 	// Current LogRecords
 	LogRecords []LogRecord
 	// Number of requests at each update, used for alerting
@@ -85,7 +85,7 @@ func (m *LogMonitor) readLog() {
 			// Read the file to the end of the current line
 			line, err = reader.ReadString('\n')
 			// If no new line was found, sleep for a short time to avoid over computing
-			if err == io.EOF{
+			if err == io.EOF {
 				time.Sleep(time.Millisecond * sleepTime)
 			} else if err != io.EOF {
 				// A new line has been found, parse if to create a new logRecord
@@ -154,17 +154,17 @@ func (m *LogMonitor) Run() {
 	ticker := time.NewTicker(time.Second * time.Duration(m.UpdateFreq))
 	for {
 		select {
-			case <-ticker.C:
-				// add the traffic number to the AlertTraffic array
-				m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
-				// If the length of the array is bigger than the window/updateFreq, remove the oldest traffic number
-				if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateFreq) {
-					m.AlertTraffic = m.AlertTraffic[1:]
-				}
-				m.alert()
-				m.report()
-			case <-m.ctx.Done():
-				return
+		case <-ticker.C:
+			// add the traffic number to the AlertTraffic array
+			m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
+			// If the length of the array is bigger than the window/updateFreq, remove the oldest traffic number
+			if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateFreq) {
+				m.AlertTraffic = m.AlertTraffic[1:]
+			}
+			m.alert()
+			m.report()
+		case <-m.ctx.Done():
+			return
 		}
 	}
 }
