@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const startInterval = 4000.0
+
 func main() {
 	// Create a global context used by the monitor and the display for cancellation signals
 	ctx, cancel := context.WithCancel(context.Background())
@@ -43,7 +45,7 @@ func main() {
 		// Get a random seed
 		rand.Seed(time.Now().UnixNano())
 		// Write logs in a goroutine
-		go monitoring.LogGenerator(ctx, *logFile)
+		go monitoring.LogGenerator(ctx, *logFile, startInterval)
 	}
 
 	// Run the monitor in a goroutine

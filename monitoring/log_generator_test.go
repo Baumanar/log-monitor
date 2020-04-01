@@ -95,7 +95,7 @@ func TestLogGenerator(t *testing.T) {
 				cancel()
 			}()
 			// Start log generation, if should be stopped after 1s
-			LogGenerator(ctx, "test.log")
+			LogGenerator(ctx, "test.log", 10)
 		})
 	}
 	err := os.Remove("test.log")

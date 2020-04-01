@@ -66,8 +66,7 @@ func writeLogLine(logFile string) {
 
 // LogGenerator generates logs and writes them to the log file
 // The evolution of the generation rate follows as triangle in order to generate alerts
-func LogGenerator(ctx context.Context, logFile string) {
-	startInterval := float64(4000)
+func LogGenerator(ctx context.Context, logFile string, startInterval float64) {
 
 	// addVal will increment the counter
 	addVal := 1.0
