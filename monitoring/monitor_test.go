@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
 )
@@ -46,24 +45,26 @@ func TestLogMonitor_readLog(t *testing.T) {
 			alertChan := make(chan AlertRecord)
 			monitor := New(ctx, cancel,"test.log", statChan, alertChan, 10, 5, 10)
 
+			go func() {
+				// Let a short time for the monitor to get at the end of the file
+				time.Sleep(100 * time.Millisecond)
+				// Write the log file
+				for i := 0; i < tt.want; i++ {
+					writeLogLine("test.log")
+				}
+				// Sleep for a short time to let the monitor compute and finish
+				time.Sleep(200 * time.Millisecond)
+				// Stop the monitor
+				cancel()
+			}()
+
 			// Check for new lines
+			monitor.readLog()
 
-			go monitor.readLog()
-			// Let a short time for the monitor to get at the end of the file
-			time.Sleep(500 * time.Millisecond)
-
-			// Write the log file
-			for i := 0; i < tt.want; i++ {
-				writeLogLine("test.log")
-			}
-			// Sleep for a short time to let the monitor compute and finish
-			time.Sleep(1000 * time.Millisecond)
 
 			if len(monitor.LogRecords) != tt.want {
 				t.Errorf("readLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
-
-
 		})
 	}
 	err := os.Remove("test.log")
@@ -73,35 +74,26 @@ func TestLogMonitor_readLog(t *testing.T) {
 
 }
 
+// Checks if the readLog is able to exit when the cancellation function is called
 func TestLogMonitor_readLog1(t *testing.T) {
 
 	t.Run("test cancellation", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-
-
 		_, err := os.Create("test.log")
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		// Create a new monitor
 		statChan := make(chan StatRecord)
 		alertChan := make(chan AlertRecord)
 		monitor := New(ctx, cancel,"test.log", statChan, alertChan, 10, 5, 10)
-
-		// run the reading
-		var wg sync.WaitGroup
-		wg.Add(2)
+		// Wait for 1 second before cancelling
 		go func() {
-			go monitor.readLog()
-			wg.Done()
-		}()
-		time.Sleep(time.Millisecond*50)
-		go func() {
+			time.Sleep(time.Second*1)
 			cancel()
-			wg.Done()
 		}()
-		wg.Wait()
+		// run the reading
+		monitor.readLog()
 	})
 
 	err := os.Remove("test.log")
@@ -242,5 +234,41 @@ func TestLogMonitor_report(t *testing.T) {
 
 			}
 		})
+	}
+}
+
+// Checks if the monitor is able to exit when the cancellation function is called
+func TestLogMonitor_Run(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"cancel_test"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := os.Create("test.log")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			// Make buffered channels of size 3 so they are not blocking, we won't use them here
+			statChan := make(chan StatRecord, 3)
+			alertChan := make(chan AlertRecord, 3)
+			// Set the alertFreq to 1 second so the function still sends some info the the statChan
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 1, 10)
+
+			// call cancel after 2 seconds
+			go func() {
+				time.Sleep(2*time.Second)
+				cancel()
+			}()
+			// Start log generation, if should be stopped after 1s
+			monitor.Run()
+		})
+	}
+	err := os.Remove("test.log")
+	if err != nil{
+		log.Fatal(err)
 	}
 }

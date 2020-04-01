@@ -84,11 +84,11 @@ func (m *LogMonitor) readLog() {
 		default:
 			// Read the file to the end of the current line
 			line, err = reader.ReadString('\n')
-			// If no new line was found, sleep for a short time to avoid overcomputing
+			// If no new line was found, sleep for a short time to avoid over computing
 			if err == io.EOF{
 				time.Sleep(time.Millisecond * sleepTime)
 			} else if err != io.EOF {
-				// A new line has been found,  parse if to create a new logRecord
+				// A new line has been found, parse if to create a new logRecord
 				newRecord, err := parseLogLine(line)
 				// Thread safety, add new logRecords
 				// Lock to avoid that the monitor flushes the array at the same time when sending statistics
@@ -150,16 +150,21 @@ func (m *LogMonitor) report() {
 func (m *LogMonitor) Run() {
 	// Concurrently read the log file
 	go m.readLog()
-	// Do the alerting and send the statistics each UpdateFreq seconds
+	// Do the alerting and send the statistics each UpdateFreq seconds with a ticker
+	ticker := time.NewTicker(time.Second * time.Duration(m.UpdateFreq))
 	for {
-		time.Sleep(time.Duration(m.UpdateFreq) * time.Second)
-		// add the traffic number to the AlertTraffic array
-		m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
-		// If the length of the array is bigger than the window, remove the oldest traffic number
-		if len(m.AlertTraffic) > (m.TimeWindow/m.UpdateFreq) {
-			m.AlertTraffic = m.AlertTraffic[1:]
+		select {
+			case <-ticker.C:
+				// add the traffic number to the AlertTraffic array
+				m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
+				// If the length of the array is bigger than the window/updateFreq, remove the oldest traffic number
+				if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateFreq) {
+					m.AlertTraffic = m.AlertTraffic[1:]
+				}
+				m.alert()
+				m.report()
+			case <-m.ctx.Done():
+				return
 		}
-		m.alert()
-		m.report()
 	}
 }

@@ -143,46 +143,45 @@ func (d *Display) update(ctx context.Context) {
 	ticker := time.NewTicker(time.Second)
 	for {
 		select {
-			// Update uptime each second
-		case <-ticker.C:
-			d.uptimeDisplay.Reset()
-			if err := d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second)))); err != nil {
-				panic(err)
-			}
-			// New statistics received
-		case info, ok := <-d.StatChan:
-			if ok {
-				if err := d.histogram.Add([]int{info.NumRequests}); err != nil {
+				// Update uptime each second
+			case <-ticker.C:
+				d.uptimeDisplay.Reset()
+				if err := d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second)))); err != nil {
 					panic(err)
 				}
-				// Clear the past information
-				d.statDisplay.Reset()
-				// Display new information
-				d.displayInfo(info)
-			} else {
-				d.cancel()
-			}
-			// Alert received
-		case alert, ok := <-d.AlertChan:
-			if ok {
-				if alert.Alert {
-					// If alert is true, display it in red
-					if err := d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
+				// New statistics received
+			case info, ok := <-d.StatChan:
+				if ok {
+					if err := d.histogram.Add([]int{info.NumRequests}); err != nil {
 						panic(err)
 					}
-
+					// Clear the past information
+					d.statDisplay.Reset()
+					// Display new information
+					d.displayInfo(info)
 				} else {
-					// If the alert recovered, display it in green
-					if err := d.alertDisplay.Write(fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorGreen))); err != nil {
-						panic(err)
-					}
+					d.cancel()
 				}
-			} else {
-				d.cancel()
-			}
+				// Alert received
+			case alert, ok := <-d.AlertChan:
+				if ok {
+					if alert.Alert {
+						// If alert is true, display it in red
+						if err := d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
+							panic(err)
+						}
 
-		case <-ctx.Done():
-			return
+					} else {
+						// If the alert recovered, display it in green
+						if err := d.alertDisplay.Write(fmt.Sprintf("High traffic has recovered, triggered at %s\n", time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorGreen))); err != nil {
+							panic(err)
+						}
+					}
+				} else {
+					d.cancel()
+				}
+			case <-ctx.Done():
+				return
 		}
 	}
 }
