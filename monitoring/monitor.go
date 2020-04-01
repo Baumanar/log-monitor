@@ -14,7 +14,7 @@ const sleepTime = 50
 
 // LogMonitor listens to the log file and retrieves new logs
 // Computes the statistics of the new logs and sends them to the display
-// Sends alert whenever the threshold is exceeded or recovers
+// Sends Alert whenever the threshold is exceeded or recovers
 type LogMonitor struct {
 	// The log file to read
 	LogFile string
@@ -23,7 +23,7 @@ type LogMonitor struct {
 	TimeWindow int
 	// number of seconds between each send to the display
 	UpdateFreq int
-	// Current alert status
+	// Current Alert status
 	InAlert bool
 	// Maximum number of request per second before alerting
 	Threshold int
@@ -62,9 +62,9 @@ func New(ctx context.Context, cancel context.CancelFunc, logFile string, statCha
 	return monitor
 }
 
-// readLog reads reads the log file
+// ReadLog reads reads the log file
 // continuously  checks for new log lines
-func (m *LogMonitor) readLog() {
+func (m *LogMonitor) ReadLog() {
 	// Open the file and defer closing when returning
 	file, _ := os.Open(m.LogFile)
 	defer file.Close()
@@ -89,7 +89,7 @@ func (m *LogMonitor) readLog() {
 				time.Sleep(time.Millisecond * sleepTime)
 			} else if err != io.EOF {
 				// A new line has been found, parse if to create a new logRecord
-				newRecord, err := parseLogLine(line)
+				newRecord, err := ParseLogLine(line)
 				// Thread safety, add new logRecords
 				// Lock to avoid that the monitor flushes the array at the same time when sending statistics
 				m.Mutex.Lock()
@@ -105,14 +105,14 @@ func (m *LogMonitor) readLog() {
 	}
 }
 
-// alert sends alerts to the display by sending an AlertRecord to the display through the Alert channel
-func (m *LogMonitor) alert() {
+// Alert sends alerts to the display by sending an AlertRecord to the display through the Alert channel
+func (m *LogMonitor) Alert() {
 	numTraffic := 0
 	// sum up the traffic in the time window
 	for _, t := range m.AlertTraffic {
 		numTraffic += t
 	}
-	// If the number of requests is above threshold*timeWindow and the monitor was not in alert
+	// If the number of requests is above threshold*timeWindow and the monitor was not in Alert
 	// set InAlert to true and send an AlertRecord to the display
 	if numTraffic > m.Threshold*m.TimeWindow && !m.InAlert {
 		m.InAlert = true
@@ -121,7 +121,7 @@ func (m *LogMonitor) alert() {
 			Alert:      true,
 			NumTraffic: numTraffic,
 		}
-		// If the number of requests is below threshold*timeWindow and the monitor was in in alert
+		// If the number of requests is below threshold*timeWindow and the monitor was in in Alert
 		// set InAlert to false and send an AlertRecord to the display
 	} else if numTraffic < m.Threshold*m.TimeWindow && m.InAlert {
 		m.InAlert = false
@@ -133,9 +133,9 @@ func (m *LogMonitor) alert() {
 }
 
 //  Report sends log statistics to the display
-func (m *LogMonitor) report() {
+func (m *LogMonitor) Report() {
 	// Compute the stats of the current records
-	statRecord := getStats(m.LogRecords, 5)
+	statRecord := GetStats(m.LogRecords, 5)
 	//
 	m.Mutex.Lock()
 	// Thread safety, add new logRecords
@@ -149,7 +149,7 @@ func (m *LogMonitor) report() {
 // Run is the main function of the monitor
 func (m *LogMonitor) Run() {
 	// Concurrently read the log file
-	go m.readLog()
+	go m.ReadLog()
 	// Do the alerting and send the statistics each UpdateFreq seconds with a ticker
 	ticker := time.NewTicker(time.Second * time.Duration(m.UpdateFreq))
 	for {
@@ -161,8 +161,8 @@ func (m *LogMonitor) Run() {
 			if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateFreq) {
 				m.AlertTraffic = m.AlertTraffic[1:]
 			}
-			m.alert()
-			m.report()
+			m.Alert()
+			m.Report()
 		case <-m.ctx.Done():
 			return
 		}

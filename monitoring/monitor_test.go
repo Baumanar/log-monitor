@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// TestLogMonitor_readLog tests the readLog function
+// TestLogMonitor_readLog tests the ReadLog function
 func TestLogMonitor_readLog(t *testing.T) {
 	// Create or empty the test log file
 
@@ -58,10 +58,10 @@ func TestLogMonitor_readLog(t *testing.T) {
 			}()
 
 			// Check for new lines
-			monitor.readLog()
+			monitor.ReadLog()
 
 			if len(monitor.LogRecords) != tt.want {
-				t.Errorf("readLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
+				t.Errorf("ReadLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
 		})
 	}
@@ -72,7 +72,7 @@ func TestLogMonitor_readLog(t *testing.T) {
 
 }
 
-// Checks if the readLog is able to exit when the cancellation function is called
+// Checks if the ReadLog is able to exit when the cancellation function is called
 func TestLogMonitor_readLog1(t *testing.T) {
 
 	t.Run("test cancellation", func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestLogMonitor_readLog1(t *testing.T) {
 			cancel()
 		}()
 		// run the reading
-		monitor.readLog()
+		monitor.ReadLog()
 	})
 
 	err := os.Remove("test.log")
@@ -108,7 +108,7 @@ func TestLogMonitor_alert(t *testing.T) {
 		threshold     int
 		timeWindow    int
 		alertTraffics [][]int
-		// alert state of the monitor at the beginning
+		// Alert state of the monitor at the beginning
 		startState bool
 		want       []AlertRecord
 	}{
@@ -157,27 +157,27 @@ func TestLogMonitor_alert(t *testing.T) {
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
 			monitor := New(ctx, cancel, "test.log", statChan, alertChan, tt.timeWindow, 5, tt.threshold)
-			// Init the alert state
+			// Init the Alert state
 			monitor.InAlert = tt.startState
 			go func() {
 				for _, traffic := range tt.alertTraffics {
 					monitor.AlertTraffic = traffic
-					monitor.alert()
+					monitor.Alert()
 				}
 				close(alertChan)
 			}()
 
-			// Index of the current wanted alert
+			// Index of the current wanted Alert
 			idx := 0
-			// Listen to the alert channel
+			// Listen to the Alert channel
 			for {
 				select {
 				case got, ok := <-alertChan:
 					if ok {
 						if got != tt.want[idx] {
-							t.Errorf("readLog() \ngot = %v lines \nwant %v lines", got, tt.want)
+							t.Errorf("ReadLog() \ngot = %v lines \nwant %v lines", got, tt.want)
 						}
-						// go to the next wanted alert
+						// go to the next wanted Alert
 						idx++
 					} else { // If the channel is closed, return
 						return
@@ -220,11 +220,11 @@ func TestLogMonitor_report(t *testing.T) {
 			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 5, 10)
 			go func() {
 				monitor.LogRecords = tt.logRecords
-				monitor.report()
+				monitor.Report()
 			}()
 			got := <-monitor.StatChan
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("report() \ngot = %v \nwant %v", got, tt.want)
+				t.Errorf("Report() \ngot = %v \nwant %v", got, tt.want)
 			}
 			if monitor.LogRecords != nil {
 				t.Errorf("LogRecords is not empty")

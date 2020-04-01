@@ -17,9 +17,9 @@ type StatRecord struct {
 }
 
 // AlertRecord is the type passed from the Monitor to
-// the display when there is an alert
+// the display when there is an Alert
 // if Alert is true, the threshold has been exceeded
-// if Alert in false, the alert recovered
+// if Alert in false, the Alert recovered
 // NumTraffic is the current number of request in the timeWindow (2min default)
 type AlertRecord struct {
 	Alert      bool
@@ -37,7 +37,7 @@ type Pair struct {
 // Computes the statistics from a list of LogRecords records
 // k is number of lines for each stat to display
 // Returns a statRecord with the top sections/HTTP methods/status, the number of requests and the number of bytes
-func getStats(records []LogRecord, k int) StatRecord {
+func GetStats(records []LogRecord, k int) StatRecord {
 
 	// Create maps to count the number of hits for sections, HTTP methods and status
 	// Get the number of requests during this step (10s default) and initialize a byte count
@@ -51,7 +51,7 @@ func getStats(records []LogRecord, k int) StatRecord {
 	for _, log := range records {
 		sectionMap[log.section]++
 		methodMap[log.method]++
-		statusMap[processStatus(log.status)]++
+		statusMap[ProcessStatus(log.status)]++
 		bytesCount += log.bytesCount
 	}
 	return StatRecord{
@@ -59,7 +59,7 @@ func getStats(records []LogRecord, k int) StatRecord {
 		TopMethods:  getTopK(methodMap, k),
 		TopStatus:   getTopK(statusMap, k),
 		NumRequests: requests,
-		BytesCount:  formatByteCount(bytesCount),
+		BytesCount:  FormatByteCount(bytesCount),
 	}
 }
 
@@ -72,7 +72,7 @@ func Min(x, y int) int {
 }
 
 // processStatus converts a status to its first number and converts the rest to x
-func processStatus(status string) string {
+func ProcessStatus(status string) string {
 	if len(status) == 3 {
 		return status[:1] + "xx"
 	}
@@ -80,7 +80,7 @@ func processStatus(status string) string {
 }
 
 // Format byte count into kB/MB/GB
-func formatByteCount(b int) string {
+func FormatByteCount(b int) string {
 	const unit = 1000
 	if b < unit {
 		return fmt.Sprintf("%d B", b)

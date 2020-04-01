@@ -71,7 +71,7 @@ func New(ctx context.Context, cancel context.CancelFunc, statChan chan monitorin
 }
 
 // Displays statistic pairs to the statDisplay
-func (d *Display) displayPairs(pairs []monitoring.Pair) {
+func (d *Display) DisplayPairs(pairs []monitoring.Pair) {
 	// We iterate i and not on the elements of pairs to always have the same number of lines printed
 	for i := 0; i < 5; i++ {
 		// display each pair on a row
@@ -94,7 +94,7 @@ func (d *Display) displayPairs(pairs []monitoring.Pair) {
 // 		The pairs of each section/method/status
 // 		The number of requests
 // 		The number of bytes
-func (d *Display) displayInfo(stat monitoring.StatRecord) {
+func (d *Display) DisplayInfo(stat monitoring.StatRecord) {
 
 	if err := d.statDisplay.Write(fmt.Sprintf("Number of requests: "), text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		panic(err)
@@ -112,17 +112,17 @@ func (d *Display) displayInfo(stat monitoring.StatRecord) {
 	if err := d.statDisplay.Write("\nTop sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		panic(err)
 	}
-	d.displayPairs(stat.TopSections)
+	d.DisplayPairs(stat.TopSections)
 
 	if err := d.statDisplay.Write("Top sections: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		panic(err)
 	}
-	d.displayPairs(stat.TopMethods)
+	d.DisplayPairs(stat.TopMethods)
 
 	if err := d.statDisplay.Write("Top status: \n", text.WriteCellOpts(cell.FgColor(cell.ColorYellow))); err != nil {
 		panic(err)
 	}
-	d.displayPairs(stat.TopStatus)
+	d.DisplayPairs(stat.TopStatus)
 }
 
 // fmtDuration formats the uptime
@@ -137,7 +137,7 @@ func fmtDuration(d time.Duration) string {
 }
 
 // update updates all panels at once
-func (d *Display) update(ctx context.Context) {
+func (d *Display) Update(ctx context.Context) {
 	startTime := time.Now().Round(time.Second)
 	ticker := time.NewTicker(time.Second)
 	for {
@@ -157,7 +157,7 @@ func (d *Display) update(ctx context.Context) {
 				// Clear the past information
 				d.statDisplay.Reset()
 				// Display new information
-				d.displayInfo(info)
+				d.DisplayInfo(info)
 			} else {
 				d.cancel()
 			}
@@ -188,7 +188,7 @@ func (d *Display) update(ctx context.Context) {
 // Run is the main function of the Display
 func (d *Display) Run() {
 	// Run a goroutine to update the all panels
-	go d.update(d.ctx)
+	go d.Update(d.ctx)
 
 	// If q is pressed, exit
 	quitter := func(k *terminalapi.Keyboard) {

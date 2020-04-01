@@ -60,7 +60,7 @@ func Test_writeLogLine(t *testing.T) {
 			// Count the number of lines written
 			count, err := lineCounter(reader)
 			if err != nil {
-				t.Errorf("readLog() \nwrote = %v lines \nwant %v lines", count, tt.lineNum)
+				t.Errorf("ReadLog() \nwrote = %v lines \nwant %v lines", count, tt.lineNum)
 			}
 		})
 	}
