@@ -17,11 +17,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Flags of the app
-	isDemo := flag.Bool("demo", false, "demo or not")
+	isDemo := flag.Bool("demo", false, "demo or not, if demo the log file will be concurrently written with fake logs")
 	logFile := flag.String("logfile", "/tmp/access.log", "logfile path")
-	timeWindow := flag.Int("timewindow", 120, "time window for alerting")
-	threshold := flag.Int("threshold", 10, "threshold for alerting")
-	updateFreq := flag.Int("updatefreq", 10, "update frequency of the statistics")
+	timeWindow := flag.Int("timewindow", 120, "time window for alerting in seconds")
+	threshold := flag.Int("threshold", 10, "threshold for alerting in requests per second")
+	updateFreq := flag.Int("updatefreq", 10, "number of seconds between each statistic update")
 	flag.Parse()
 
 	// Verify that the log file exists

@@ -47,7 +47,7 @@ func New(ctx context.Context, cancel context.CancelFunc, statChan chan monitorin
 	if err != nil {
 		panic(err)
 	}
-	alertDisplay, err := text.New(text.WrapAtWords())
+	alertDisplay, err := text.New(text.RollContent(), text.WrapAtWords())
 	if err != nil {
 		panic(err)
 	}
@@ -153,9 +153,8 @@ func (d *Display) update(ctx context.Context) {
 			d.displayInfo(info)
 
 		case alert := <-d.AlertChan:
-			d.alertDisplay.Reset()
 			if alert.Alert {
-				if err := d.alertDisplay.Write(fmt.Sprintf("\n High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
+				if err := d.alertDisplay.Write(fmt.Sprintf("High traffic generated an alert - hits = %d, triggered at %s\n", alert.NumTraffic, time.Now().Format("15:04:05, January 02 2006")), text.WriteCellOpts(cell.FgColor(cell.ColorRed))); err != nil {
 					panic(err)
 				}
 			} else {

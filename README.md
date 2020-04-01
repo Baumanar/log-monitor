@@ -2,6 +2,8 @@
 
 A simple console program that monitors HTTP traffic on your machine. Listens to an actively written log file and displays statistics
 
+![HTTP Log-monitor](images/demo.gif)
+
 ## Requirements
 
 The project is written in Go and uses go modules. Developpement was made on go1.14.1 but was also tested on go1.13.
@@ -20,6 +22,8 @@ Once you built the project run:
 ```sh
   ./log-monitor
 ```
+
+To exit the app, simply press Q.
 
 The options of the program are the following:
 
@@ -45,7 +49,9 @@ Example:
 ```
 
 ## Demo
-If the ```demo``` flag is set to true, a separate goroutine writes the log file to simulate logging.
+If the ```demo``` flag is set to true, a separate ```log_generator``` goroutine writes the log file to simulate logging.
+The evolution of the number of logs written follows a triangle pattern. With the default threshold (10 per second), the 
+evolution of the traffic should trigger alerts approximately every 1-2 minute.
 
 ## Architecture
 
