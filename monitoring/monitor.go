@@ -142,7 +142,7 @@ func (m *LogMonitor) report() {
 	// Lock to avoid that the monitor adds new records at the same time it is flushing
 	m.LogRecords = nil
 	m.Mutex.Unlock()
-	// Send stats using the StatCha
+	// Send stats using the StatChan
 	m.StatChan <- statRecord
 }
 

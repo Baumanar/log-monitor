@@ -10,7 +10,7 @@ The project is written in Go and uses go modules. Developpement was made on go1.
 
 ### Build
 
-To build the project, simply run:
+To build the project, run:
 ```sh
   go build
 ```
@@ -75,7 +75,7 @@ if the average traffic during the last ```timewindow``` exceeds the threshold pe
 Alerts are sent by using the alert channel
 
 The displayer contains 4 panels:
-- The uptime of the program
+- The uptime of the app
 - The information panel on which statistics are displayed
 - The alert panel on which alerts are displayed
 - An histogram of the traffic evolution. The purpose of the histogram is just to give an intuition of the traffic evolution
@@ -86,6 +86,7 @@ The app could be improved in many ways:
 - The monitor continuously checks for file modification, it would be better that file modifications trigger events. This could be maybe done by some package like 
 [fsnotify](https://github.com/fsnotify/fsnotify) or [tail](https://github.com/hpcloud/tail)
 - Improve the user interface. If I had more time, I think I would have implemented an interface available on a web browser for conviency
+- Add performance benchmarks and do some pprof
 
 
 
