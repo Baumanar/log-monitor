@@ -11,7 +11,7 @@ A simple console program that monitors HTTP traffic on your machine. Listens to 
 - The console app displays stats every 10s about the traffic during those 10s: the sections of the web site with the most hits, as well 
 as interesting summary statistics on the traffic as a whole.
 - Whenever total traffic for the past 2 minutes exceeds a certain number on average, the app displays a message saying that “High traffic 
-generated an alert - hits = {value}, triggered at {time}”. The default threshold is be 10 requests per second, and is be overridable.
+generated an alert - hits = {value}, triggered at {time}”. The default threshold is 10 requests per second, and is overridable.
 - Whenever the total traffic drops again below that value on average for the past 2 minutes, the app displays another message detailing 
 when the alert recovered
 
@@ -19,7 +19,7 @@ when the alert recovered
 
 ## Requirements
 
-The project is written in Go and uses go modules. Developpement was made on go1.14.1 but was also tested on go1.13.
+The project is written in Go and uses go modules. Developement was made on go1.14.1 but was also tested on go1.13.
 
 ### Build
 
