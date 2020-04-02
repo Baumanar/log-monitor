@@ -87,7 +87,9 @@ The monitor also checks for alerts,
 if the average traffic during the last ```timewindow``` exceeds the threshold per second, an alert is sent to the display. 
 Alerts are sent by using the alert channel
 
-The displayer contains 4 panels:
+
+The display uses [termdash](https://github.com/mum4k/termdash) which is a terminal based dashboard to display the important information.
+It contains 4 panels:
 - The uptime of the app
 - The information panel on which statistics are displayed
 - The alert panel on which alerts are displayed

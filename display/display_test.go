@@ -9,9 +9,7 @@ import (
 )
 
 func Test_fmtDuration(t *testing.T) {
-	type args struct {
-		d time.Duration
-	}
+
 	tests := []struct {
 		name  string
 		input time.Duration
@@ -24,7 +22,7 @@ func Test_fmtDuration(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := fmtDuration(tt.input); got != tt.want {
+			if got := FmtDuration(tt.input); got != tt.want {
 				t.Errorf("fmtDuration() = %v, want %v", got, tt.want)
 			}
 		})

@@ -31,7 +31,7 @@ type LogRecord struct {
 // Compile the regex once and use it for every log line
 var regex = regexp.MustCompile(`(\S+)\s+(\S+)\s+(\S+)\s+(\[.+\])\s+\"([A-Z]+)\s+(\/[^\/]+)\/.+\s+(\S+)\"\s+(\S+)\s+([0-9]+|-)(.+)?`)
 
-// Parses a log record according to the w3c-formatted HTTP access log and return the LogRecord associated
+// ParseLogLine parses a log record according to the w3c-formatted HTTP access log and return the LogRecord associated
 func ParseLogLine(input string) (*LogRecord, error) {
 	// log pattern
 
@@ -41,12 +41,13 @@ func ParseLogLine(input string) (*LogRecord, error) {
 		return nil, errors.New("Invalid log format.")
 	}
 	var bytes int
-	if matches[9] != "-"{
+	// If it is not a dash then it is a number
+	if matches[9] != "-" {
 		bytes, _ = strconv.Atoi(matches[9])
+		// A dash means that no bytes were transferred
 	} else {
 		bytes = 0
 	}
-
 
 	// return a new LogRecord instance
 	return &LogRecord{

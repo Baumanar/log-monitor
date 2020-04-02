@@ -34,7 +34,7 @@ type Pair struct {
 	Value int
 }
 
-// Computes the statistics from a list of LogRecords records
+// GetStats computes the statistics from a list of LogRecords records
 // k is number of lines for each stat to display
 // Returns a statRecord with the top sections/HTTP methods/status, the number of requests and the number of bytes
 func GetStats(records []LogRecord, k int) StatRecord {
@@ -71,7 +71,7 @@ func Min(x, y int) int {
 	return x
 }
 
-// processStatus converts a status to its first number and converts the rest to x
+// ProcessStatus converts a status to its first number and converts the rest to x
 func ProcessStatus(status string) string {
 	if len(status) == 3 {
 		return status[:1] + "xx"
@@ -79,7 +79,7 @@ func ProcessStatus(status string) string {
 	return status
 }
 
-// Format byte count into kB/MB/GB
+// FormatByteCount formats byte count into kB/MB/GB
 func FormatByteCount(b int) string {
 	const unit = 1000
 	if b < unit {

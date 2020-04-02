@@ -270,7 +270,6 @@ func TestLogMonitor_Run(t *testing.T) {
 	}
 }
 
-
 // Helper func for TestLogMonitor_Run1
 func max(x, y int) int {
 	if x > y {
@@ -306,16 +305,16 @@ func TestLogMonitor_Run1(t *testing.T) {
 				// counter ton compare the size of AlertTraffic a each tick
 				counter := 1
 				for {
-						select {
-						case <-monitor.StatChan:
-							if len(monitor.AlertTraffic) != Min(counter, 3) {
-								t.Errorf("monitor.LogRecords should be maximum %d: got: %d", Min(counter, 3),len(monitor.AlertTraffic))
-							}
-							counter++
-						case <-ticker.C:
-							cancel()
+					select {
+					case <-monitor.StatChan:
+						if len(monitor.AlertTraffic) != Min(counter, 3) {
+							t.Errorf("monitor.LogRecords should be maximum %d: got: %d", Min(counter, 3), len(monitor.AlertTraffic))
 						}
+						counter++
+					case <-ticker.C:
+						cancel()
 					}
+				}
 			}()
 			// Start log generation, if should be stopped after 1s
 			monitor.Run()

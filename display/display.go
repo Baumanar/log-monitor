@@ -57,7 +57,7 @@ func New(ctx context.Context, cancel context.CancelFunc, statChan chan monitorin
 		log.Fatal(err)
 	}
 
-	displayer := &Display{
+	display := &Display{
 		StatChan:      statChan,
 		AlertChan:     alertChan,
 		uptimeDisplay: uptimeDisplay,
@@ -67,10 +67,10 @@ func New(ctx context.Context, cancel context.CancelFunc, statChan chan monitorin
 		ctx:           ctx,
 		cancel:        cancel,
 	}
-	return displayer
+	return display
 }
 
-// Displays statistic pairs to the statDisplay
+// DisplayPairs displays statistic pairs to the statDisplay
 func (d *Display) DisplayPairs(pairs []monitoring.Pair) {
 	// We iterate i and not on the elements of pairs to always have the same number of lines printed
 	for i := 0; i < 5; i++ {
@@ -84,7 +84,7 @@ func (d *Display) DisplayPairs(pairs []monitoring.Pair) {
 	}
 }
 
-// displayInfo displays all the information on the statDisplay:
+// DisplayInfo displays all the information on the statDisplay:
 // 		The pairs of each section/method/status
 // 		The number of requests
 // 		The number of bytes
@@ -105,8 +105,8 @@ func (d *Display) DisplayInfo(stat monitoring.StatRecord) {
 	d.DisplayPairs(stat.TopStatus)
 }
 
-// fmtDuration formats the uptime
-func fmtDuration(d time.Duration) string {
+// FmtDuration formats the uptime
+func FmtDuration(d time.Duration) string {
 	// Convert duration to int
 	// Quite inconvenient, but I did not find a way to keep it to duration
 	uptime := int(d) / 1000000000
@@ -116,7 +116,7 @@ func fmtDuration(d time.Duration) string {
 	return fmt.Sprintf("%02dh%02dmin%02ds", h, m, s)
 }
 
-// update updates all panels at once
+// Update updates all panels at once
 func (d *Display) Update(ctx context.Context) {
 	startTime := time.Now().Round(time.Second)
 	ticker := time.NewTicker(time.Second)
@@ -125,7 +125,7 @@ func (d *Display) Update(ctx context.Context) {
 		// Update uptime each second
 		case <-ticker.C:
 			d.uptimeDisplay.Reset()
-			d.uptimeDisplay.Write(fmt.Sprintf("%s", fmtDuration(time.Since(startTime).Round(time.Second))))
+			d.uptimeDisplay.Write(fmt.Sprintf("%s", FmtDuration(time.Since(startTime).Round(time.Second))))
 			// New statistics received
 		case info, ok := <-d.StatChan:
 			if ok {

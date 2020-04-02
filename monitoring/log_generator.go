@@ -21,32 +21,32 @@ func RandomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(256), rand.Intn(256), rand.Intn(256), rand.Intn(256))
 }
 
-// Generates a random HTTP request
+// RandomRequest generates a random HTTP request
 func RandomRequest() string {
 	return fmt.Sprintf("\"%s %s%s HTTP/1.0\"", verbs[rand.Intn(len(verbs))], sections[rand.Intn(len(sections))], subsections[rand.Intn(len(subsections))])
 }
 
-// Generates a random user among the fixed user list
+// RandomUser generates a random user among the fixed user list
 func RandomUser() string {
 	return fmt.Sprintf("%s", users[rand.Intn(len(users))])
 }
 
-// Generates a random user among the fixed user list
+// RandomStatus generates a random user among the fixed user list
 func RandomStatus() string {
 	return fmt.Sprintf("%s", status[rand.Intn(len(status))])
 }
 
-// Generates a random byte size
+// RandomByteSize generates a random byte size
 func RandomByteSize() string {
 	return fmt.Sprintf("%d", rand.Intn(10000))
 }
 
-// Returns current time formatted in the proper format
+// CurrentTime returns current time formatted in the proper format
 func CurrentTime() string {
 	return time.Now().Format("[02/January/2006:15:04:05 -0700]")
 }
 
-// Generates the full log line
+// GenerateLog generates the full log line
 func GenerateLog() string {
 	return fmt.Sprintf("%s - %s %s %s %s %s\n", RandomIP(), RandomUser(), CurrentTime(), RandomRequest(), RandomStatus(), RandomByteSize())
 }

@@ -132,7 +132,7 @@ func (m *LogMonitor) Alert() {
 	}
 }
 
-//  Report sends log statistics to the display
+// Report sends log statistics to the display
 func (m *LogMonitor) Report() {
 	// Compute the stats of the current records
 	statRecord := GetStats(m.LogRecords, 5)
