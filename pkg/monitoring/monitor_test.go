@@ -2,7 +2,7 @@ package monitoring
 
 import (
 	"context"
-	"github.com/Baumanar/log-monitor/generator"
+	"github.com/Baumanar/log-monitor/pkg/generator"
 	"log"
 	"os"
 	"reflect"

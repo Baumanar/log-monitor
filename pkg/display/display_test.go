@@ -2,7 +2,7 @@ package display
 
 import (
 	"context"
-	"github.com/Baumanar/log-monitor/monitoring"
+	"github.com/Baumanar/log-monitor/pkg/monitoring"
 	"strconv"
 	"testing"
 	"time"

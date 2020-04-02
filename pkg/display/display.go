@@ -3,7 +3,7 @@ package display
 import (
 	"context"
 	"fmt"
-	"github.com/Baumanar/log-monitor/monitoring"
+	"github.com/Baumanar/log-monitor/pkg/monitoring"
 	"github.com/mum4k/termdash"
 	"github.com/mum4k/termdash/cell"
 	"github.com/mum4k/termdash/container"
