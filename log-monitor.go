@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Baumanar/log-monitor/display"
+	"github.com/Baumanar/log-monitor/generator"
 	"github.com/Baumanar/log-monitor/monitoring"
 	"log"
 	"math/rand"
@@ -45,7 +46,7 @@ func main() {
 		// Get a random seed
 		rand.Seed(time.Now().UnixNano())
 		// Write logs in a goroutine
-		go monitoring.LogGenerator(ctx, *logFile, startInterval)
+		go generator.LogGenerator(ctx, *logFile, startInterval)
 	}
 
 	// Run the monitor in a goroutine

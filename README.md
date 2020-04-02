@@ -40,7 +40,6 @@ To exit the app, simply press Q.
 
 The options of the program are the following:
 
-
 ```
 Usage of ./log-monitor:
   -demo

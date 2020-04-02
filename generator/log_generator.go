@@ -1,4 +1,4 @@
-package monitoring
+package generator
 
 import (
 	"context"
@@ -16,7 +16,7 @@ var subsections = []string{"/view.html", "/request/865/", "/ref=lh_cart", "/book
 var verbs = []string{"POST", "GET", "PUT", "PATCH", "DELETE"}
 var status = []string{"200", "201", "202", "203", "204", "300", "301", "302", "400", "401", "402", "403", "404", "500", "501", "502", "503"}
 
-// Generates a random IP address
+// RandomIP generates a random IP address
 func RandomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(256), rand.Intn(256), rand.Intn(256), rand.Intn(256))
 }

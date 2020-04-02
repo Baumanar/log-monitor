@@ -1,4 +1,4 @@
-package monitoring
+package generator
 
 import (
 	"bufio"
@@ -31,7 +31,7 @@ func lineCounter(r io.Reader) (int, error) {
 	}
 }
 
-// Test_writeLogLine checks if the number of lines written by the log_generator is correct
+// Test_writeLogLine checks if the number of lines written by the generator is correct
 func Test_writeLogLine(t *testing.T) {
 	type args struct {
 		logFile string
@@ -71,7 +71,7 @@ func Test_writeLogLine(t *testing.T) {
 	}
 }
 
-// Checks if the log_generator is able to exit when the cancellation function is called
+// Checks if the generator is able to exit when the cancellation function is called
 func TestLogGenerator(t *testing.T) {
 	tests := []struct {
 		name string
