@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"context"
+	"fmt"
 	"github.com/Baumanar/log-monitor/pkg/generator"
 	"log"
 	"os"
@@ -271,14 +272,6 @@ func TestLogMonitor_Run(t *testing.T) {
 	}
 }
 
-// Helper func for TestLogMonitor_Run1
-func max(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
-}
-
 // Checks if alertTraffic reaches maximum size and does not goes over this size
 func TestLogMonitor_Run1(t *testing.T) {
 	tests := []struct {
@@ -302,16 +295,18 @@ func TestLogMonitor_Run1(t *testing.T) {
 			monitor.LogRecords = []LogRecord{}
 			go func() {
 				// Let the monitor run for 5 seconds
-				ticker := time.NewTicker(time.Second * time.Duration(5))
+				ticker := time.NewTicker(time.Second * time.Duration(6))
 				// counter ton compare the size of AlertTraffic a each tick
 				counter := 1
 				for {
 					select {
 					case <-monitor.StatChan:
-						if len(monitor.AlertTraffic) != Min(counter, 3) {
+						//fmt.Println(counter % 3, monitor.AlertIndex)
+						if counter%3 != monitor.AlertIndex {
 							t.Errorf("monitor.LogRecords should be maximum %d: got: %d", Min(counter, 3), len(monitor.AlertTraffic))
 						}
 						counter++
+
 					case <-ticker.C:
 						cancel()
 					}
@@ -319,6 +314,82 @@ func TestLogMonitor_Run1(t *testing.T) {
 			}()
 			// Start log generation, if should be stopped after 1s
 			monitor.Run()
+		})
+	}
+	err := os.Remove("test.log")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Checks if the monitor is able to exit when the cancellation function is called
+func TestLogMonitor_Run2(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		{"cancel_test"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := os.Create("test.log")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			// Make buffered channels of size 3 so they are not blocking, we won't use them here
+			statChan := make(chan StatRecord)
+			alertChan := make(chan AlertRecord)
+			// Set the alertFreq to 1 second so the function still sends some info the the statChan
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 1, 1000000)
+
+			count := 0
+			go func() {
+				//stop writing logs after 10 seconds
+				tickerWrite := time.NewTicker(time.Duration(10) * time.Second)
+
+				time.Sleep(500 * time.Millisecond)
+				step := 2000
+				for {
+					select {
+					case <-tickerWrite.C:
+						return
+					default:
+						for i := 0; i < step; i++ {
+							generator.WriteLogLine("test.log")
+						}
+						count += step
+						time.Sleep(50 * time.Millisecond)
+						//fmt.Printf("generator wrote %d lines\n", count)
+					}
+				}
+			}()
+			// Start log generation, if should be stopped after 1s
+			countRead := 0
+			go func() {
+				//stop reading logs after 12 seconds
+				tickerRead := time.NewTicker(time.Duration(12) * time.Second)
+				for {
+
+					select {
+					case stat := <-statChan:
+						// add the traffic number to the AlertTraffic array
+						countRead += stat.NumRequests
+						fmt.Printf("monitor read %d lines\n", countRead)
+					case alert := <-alertChan:
+						// add the traffic number to the AlertTraffic array
+						fmt.Printf("Alert:  %d \n", alert.NumTraffic)
+					case <-tickerRead.C:
+						// Cancel to stop the monitor running in the main process
+						cancel()
+					}
+				}
+			}()
+			monitor.Run()
+			fmt.Printf("Final written: %d \n Final read: %d \n", count, countRead)
+			if countRead != count {
+				t.Errorf("Final written: %d \n Final read: %d \n", count, countRead)
+			}
 		})
 	}
 	err := os.Remove("test.log")

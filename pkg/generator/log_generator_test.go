@@ -33,9 +33,7 @@ func lineCounter(r io.Reader) (int, error) {
 
 // Test_writeLogLine checks if the number of lines written by the generator is correct
 func Test_writeLogLine(t *testing.T) {
-	type args struct {
-		logFile string
-	}
+
 	tests := []struct {
 		name    string
 		lineNum int

@@ -31,6 +31,7 @@ type LogMonitor struct {
 	LogRecords []LogRecord
 	// Number of requests at each update, used for alerting
 	AlertTraffic []int
+	AlertIndex   int
 	// mutex for thread safety
 	Mutex sync.Mutex
 	// channel to communicate statistics to the display
@@ -52,7 +53,8 @@ func New(ctx context.Context, cancel context.CancelFunc, logFile string, statCha
 		InAlert:        false,
 		Threshold:      threshold,
 		LogRecords:     make([]LogRecord, 0),
-		AlertTraffic:   make([]int, 0),
+		AlertTraffic:   make([]int, timeWindow/updateInterval),
+		AlertIndex:     0,
 		Mutex:          mutex,
 		StatChan:       statChan,
 		AlertChan:      alertChan,
@@ -92,12 +94,12 @@ func (m *LogMonitor) ReadLog() {
 				newRecord, err := ParseLogLine(line)
 				// Thread safety, add new logRecords
 				// Lock to avoid that the monitor flushes the array at the same time when sending statistics
-				m.Mutex.Lock()
 				// If the log has been correctly parsed, add it to the current record list
 				if err == nil {
+					m.Mutex.Lock()
 					m.LogRecords = append(m.LogRecords, *newRecord)
+					m.Mutex.Unlock()
 				}
-				m.Mutex.Unlock()
 			} else {
 				log.Fatal(err)
 			}
@@ -135,9 +137,10 @@ func (m *LogMonitor) Alert() {
 // Report sends log statistics to the display
 func (m *LogMonitor) Report() {
 	// Compute the stats of the current records
+	m.Mutex.Lock()
 	statRecord := GetStats(m.LogRecords, 5)
 	//
-	m.Mutex.Lock()
+
 	// Thread safety, add new logRecords
 	// Lock to avoid that the monitor adds new records at the same time it is flushing
 	m.LogRecords = nil
@@ -156,11 +159,9 @@ func (m *LogMonitor) Run() {
 		select {
 		case <-ticker.C:
 			// add the traffic number to the AlertTraffic array
-			m.AlertTraffic = append(m.AlertTraffic, len(m.LogRecords))
-			// If the length of the array is bigger than the window/updateInterval, remove the oldest traffic number
-			if len(m.AlertTraffic) > (m.TimeWindow / m.UpdateInterval) {
-				m.AlertTraffic = m.AlertTraffic[1:]
-			}
+			m.AlertTraffic[m.AlertIndex] = len(m.LogRecords)
+			m.AlertIndex += 1
+			m.AlertIndex = m.AlertIndex % (m.TimeWindow / m.UpdateInterval)
 			m.Alert()
 			m.Report()
 		case <-m.ctx.Done():
