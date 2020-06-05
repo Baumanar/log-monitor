@@ -1,11 +1,9 @@
 package monitoring
 
 import (
-	"bufio"
 	"context"
-	"io"
+	"github.com/hpcloud/tail"
 	"log"
-	"os"
 	"sync"
 	"time"
 )
@@ -38,13 +36,15 @@ type LogMonitor struct {
 	StatChan chan StatRecord
 	// channel to send alerts to the display
 	AlertChan chan AlertRecord
+	// Reopen the file if truncated
+	ReOpenFile bool
 	// Global app context
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
 // New returns a new LogMonitor with the specified parameters
-func New(ctx context.Context, cancel context.CancelFunc, logFile string, statChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateInterval int, threshold int) *LogMonitor {
+func New(ctx context.Context, cancel context.CancelFunc, logFile string, statChan chan StatRecord, alertChan chan AlertRecord, timeWindow int, updateInterval int, threshold int, ReOpenFile bool) *LogMonitor {
 	var mutex sync.Mutex
 	monitor := &LogMonitor{
 		LogFile:        logFile,
@@ -60,6 +60,7 @@ func New(ctx context.Context, cancel context.CancelFunc, logFile string, statCha
 		AlertChan:      alertChan,
 		ctx:            ctx,
 		cancel:         cancel,
+		ReOpenFile:     ReOpenFile,
 	}
 	return monitor
 }
@@ -67,39 +68,26 @@ func New(ctx context.Context, cancel context.CancelFunc, logFile string, statCha
 // ReadLog reads reads the log file
 // continuously  checks for new log lines
 func (m *LogMonitor) ReadLog() {
-	// Open the file and defer closing when returning
-	file, _ := os.Open(m.LogFile)
-	defer file.Close()
-	// Go to the end of the file to get newest log lines
-	_, err := file.Seek(0, 2)
+	// To continuously read the log file, we use the package tail (github.com/hpcloud/tail) that mimicks the fail -f behavior
+	// this package also manages file truncation/rotation which is nice
+	tailListener, err := tail.TailFile(m.LogFile, tail.Config{Follow: true, ReOpen: m.ReOpenFile, MustExist: true, Logger: tail.DiscardingLogger})
 	if err != nil {
-		log.Fatal()
+		log.Fatal(err)
 	}
-
-	// Create a buffer for reading
-	reader := bufio.NewReader(file)
-	var line string
 	for {
 		select {
 		case <-m.ctx.Done():
 			return
-		default:
-			// Read the file to the end of the current line
-			line, err = reader.ReadString('\n')
-			// If no new line was found, sleep for a short time to avoid over computing
-			if err == io.EOF {
-				time.Sleep(time.Millisecond * sleepTime)
-			} else if err != io.EOF {
-				// A new line has been found, parse if to create a new logRecord
-				newRecord, err := ParseLogLine(line)
-				// Thread safety, add new logRecords
-				// Lock to avoid that the monitor flushes the array at the same time when sending statistics
-				// If the log has been correctly parsed, add it to the current record list
-				if err == nil {
-					m.Mutex.Lock()
-					m.LogRecords = append(m.LogRecords, *newRecord)
-					m.Mutex.Unlock()
-				}
+		case line := <-tailListener.Lines:
+
+			newRecord, err := ParseLogLine(line.Text)
+			// Thread safety, add new logRecords
+			// Lock to avoid that the monitor flushes the array at the same time when sending statistics
+			// If the log has been correctly parsed, add it to the current record list
+			if err == nil {
+				m.Mutex.Lock()
+				m.LogRecords = append(m.LogRecords, *newRecord)
+				m.Mutex.Unlock()
 			} else {
 				log.Fatal(err)
 			}
@@ -117,7 +105,6 @@ func (m *LogMonitor) Alert() {
 	// If the number of requests is above threshold*timeWindow and the monitor was not in Alert
 	// set InAlert to true and send an AlertRecord to the display
 	if numTraffic > m.Threshold*m.TimeWindow && !m.InAlert {
-		m.InAlert = true
 		m.InAlert = true
 		m.AlertChan <- AlertRecord{
 			Alert:      true,
@@ -139,7 +126,6 @@ func (m *LogMonitor) Report() {
 	// Compute the stats of the current records
 	m.Mutex.Lock()
 	statRecord := GetStats(m.LogRecords, 5)
-	//
 
 	// Thread safety, add new logRecords
 	// Lock to avoid that the monitor adds new records at the same time it is flushing

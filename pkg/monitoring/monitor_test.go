@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -27,31 +28,25 @@ func TestLogMonitor_readLog(t *testing.T) {
 		{"test5", 10000},
 	}
 
-	for _, tt := range tests {
+	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 
-			_, err := os.Create("test.log")
+			_, err := os.Create("test" + strconv.Itoa(idx) + ".log")
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal("aaa", err)
 			}
-
-			//Write some lines in the log file
-			for i := 0; i < 50; i++ {
-				generator.WriteLogLine("test.log")
-			}
-
 			// Create a new monitor
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 10, 5, 10)
+			monitor := New(ctx, cancel, "test"+strconv.Itoa(idx)+".log", statChan, alertChan, 10, 5, 10, false)
 
 			go func() {
 				// Let a short time for the monitor to get at the end of the file
 				time.Sleep(100 * time.Millisecond)
 				// Write the log file
 				for i := 0; i < tt.want; i++ {
-					generator.WriteLogLine("test.log")
+					generator.WriteLogLine("test" + strconv.Itoa(idx) + ".log")
 				}
 				// Sleep for a short time to let the monitor compute and finish
 				time.Sleep(200 * time.Millisecond)
@@ -65,11 +60,11 @@ func TestLogMonitor_readLog(t *testing.T) {
 			if len(monitor.LogRecords) != tt.want {
 				t.Errorf("ReadLog() \nread = %v lines \nwant %v lines", len(monitor.LogRecords), tt.want)
 			}
+			err = os.Remove("test" + strconv.Itoa(idx) + ".log")
+			if err != nil {
+				log.Fatal(err)
+			}
 		})
-	}
-	err := os.Remove("test.log")
-	if err != nil {
-		log.Fatal(err)
 	}
 
 }
@@ -86,7 +81,7 @@ func TestLogMonitor_readLog1(t *testing.T) {
 		// Create a new monitor
 		statChan := make(chan StatRecord)
 		alertChan := make(chan AlertRecord)
-		monitor := New(ctx, cancel, "test.log", statChan, alertChan, 10, 5, 10)
+		monitor := New(ctx, cancel, "test.log", statChan, alertChan, 10, 5, 10, false)
 		// Wait for 1 second before cancelling
 		go func() {
 			time.Sleep(time.Second * 1)
@@ -158,7 +153,7 @@ func TestLogMonitor_alert(t *testing.T) {
 			// Create a new monitor
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel, "test.log", statChan, alertChan, tt.timeWindow, 5, tt.threshold)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, tt.timeWindow, 5, tt.threshold, false)
 			// Init the Alert state
 			monitor.InAlert = tt.startState
 			go func() {
@@ -219,7 +214,7 @@ func TestLogMonitor_report(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
-			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 5, 10)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 5, 10, false)
 			go func() {
 				monitor.LogRecords = tt.logRecords
 				monitor.Report()
@@ -255,7 +250,7 @@ func TestLogMonitor_Run(t *testing.T) {
 			statChan := make(chan StatRecord, 3)
 			alertChan := make(chan AlertRecord, 3)
 			// Set the alertFreq to 1 second so the function still sends some info the the statChan
-			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 1, 10)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 1, 10, false)
 
 			// call cancel after 2 seconds
 			go func() {
@@ -264,12 +259,13 @@ func TestLogMonitor_Run(t *testing.T) {
 			}()
 			// Start log generation, if should be stopped after 1s
 			monitor.Run()
+			err = os.Remove("test.log")
+			if err != nil {
+				log.Fatal(err)
+			}
 		})
 	}
-	err := os.Remove("test.log")
-	if err != nil {
-		log.Fatal(err)
-	}
+
 }
 
 // Checks if alertTraffic reaches maximum size and does not goes over this size
@@ -291,7 +287,7 @@ func TestLogMonitor_Run1(t *testing.T) {
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
 			// The size of the alertTraffic should be maximum 3 and be updated every second
-			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 3, 1, 10)
+			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 3, 1, 10, false)
 			monitor.LogRecords = []LogRecord{}
 			go func() {
 				// Let the monitor run for 5 seconds
@@ -322,7 +318,7 @@ func TestLogMonitor_Run1(t *testing.T) {
 	}
 }
 
-// Checks if the monitor is able to exit when the cancellation function is called
+// Checks if the monitor multi thread is safe and that there is no logRecords lost
 func TestLogMonitor_Run2(t *testing.T) {
 	tests := []struct {
 		name string
@@ -331,7 +327,7 @@ func TestLogMonitor_Run2(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := os.Create("test.log")
+			_, err := os.Create("race.log")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -341,7 +337,7 @@ func TestLogMonitor_Run2(t *testing.T) {
 			statChan := make(chan StatRecord)
 			alertChan := make(chan AlertRecord)
 			// Set the alertFreq to 1 second so the function still sends some info the the statChan
-			monitor := New(ctx, cancel, "test.log", statChan, alertChan, 120, 1, 1000000)
+			monitor := New(ctx, cancel, "race.log", statChan, alertChan, 120, 1, 1000000, false)
 
 			count := 0
 			go func() {
@@ -356,7 +352,7 @@ func TestLogMonitor_Run2(t *testing.T) {
 						return
 					default:
 						for i := 0; i < step; i++ {
-							generator.WriteLogLine("test.log")
+							generator.WriteLogLine("race.log")
 						}
 						count += step
 						time.Sleep(50 * time.Millisecond)
@@ -392,7 +388,7 @@ func TestLogMonitor_Run2(t *testing.T) {
 			}
 		})
 	}
-	err := os.Remove("test.log")
+	err := os.Remove("race.log")
 	if err != nil {
 		log.Fatal(err)
 	}
